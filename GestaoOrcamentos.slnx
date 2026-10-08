@@ -7,4 +7,7 @@
   <Folder Name="/src/">
     <Project Path="src/GestaoOrcamentos.Web/GestaoOrcamentos.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GestaoOrcamentos.Tests/GestaoOrcamentos.Tests.csproj" />
+  </Folder>
 </Solution>
