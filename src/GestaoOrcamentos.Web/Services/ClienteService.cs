@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using GestaoOrcamentos.Web.Data;
 using GestaoOrcamentos.Web.Models;
 
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestaoOrcamentos.Web.Services;
@@ -66,8 +67,20 @@ public class ClienteService(GestaoOrcamentosDbContext dbContext)
             return false;
         }
 
+        if (await dbContext.Orcamentos.AnyAsync(orcamento => orcamento.ClienteId == id, cancellationToken))
+        {
+            throw new InvalidOperationException("Não é possível excluir um cliente com orçamentos vinculados.");
+        }
+
         dbContext.Clientes.Remove(cliente);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 547 })
+        {
+            throw new InvalidOperationException("Não é possível excluir um cliente com orçamentos vinculados.", ex);
+        }
 
         return true;
     }

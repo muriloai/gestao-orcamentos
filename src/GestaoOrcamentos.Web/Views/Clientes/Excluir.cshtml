@@ -6,6 +6,11 @@
 <h1 class="h2">Excluir cliente</h1>
 <p>Tem certeza de que deseja excluir <strong>@Model.Nome</strong>?</p>
 
+@if (ViewData["Erro"] is string erro)
+{
+    <div class="alert alert-danger" role="alert">@erro</div>
+}
+
 <form asp-action="Excluir" asp-route-id="@Model.Id" method="post">
     <button type="submit" class="btn btn-danger">Confirmar exclusão</button>
     <a asp-action="Detalhes" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>

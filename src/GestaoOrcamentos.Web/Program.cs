@@ -13,6 +13,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<GestaoOrcamentosDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("GestaoOrcamentos")));
 builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<OrcamentoService>();
 
 var app = builder.Build();
 var cultura = CultureInfo.GetCultureInfo("pt-BR");

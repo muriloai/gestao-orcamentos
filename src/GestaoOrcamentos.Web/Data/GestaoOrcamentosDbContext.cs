@@ -8,6 +8,8 @@ public class GestaoOrcamentosDbContext(DbContextOptions<GestaoOrcamentosDbContex
 {
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<ConfiguracaoNegocio> ConfiguracoesNegocio => Set<ConfiguracaoNegocio>();
+    public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
+    public DbSet<ItemOrcamento> ItensOrcamento => Set<ItemOrcamento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,6 +42,34 @@ public class GestaoOrcamentosDbContext(DbContextOptions<GestaoOrcamentosDbContex
             entity.Property(negocio => negocio.Bairro).HasMaxLength(100);
             entity.Property(negocio => negocio.Cidade).HasMaxLength(100);
             entity.Property(negocio => negocio.Uf).HasMaxLength(2);
+        });
+
+        modelBuilder.Entity<Orcamento>(entity =>
+        {
+            entity.Property(orcamento => orcamento.Titulo).HasMaxLength(150).IsRequired();
+            entity.Property(orcamento => orcamento.DataEmissao).HasColumnType("date");
+            entity.Property(orcamento => orcamento.Validade).HasColumnType("date");
+            entity.HasOne(orcamento => orcamento.Cliente)
+                .WithMany()
+                .HasForeignKey(orcamento => orcamento.ClienteId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasMany(orcamento => orcamento.Itens)
+                .WithOne()
+                .HasForeignKey(item => item.OrcamentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ItemOrcamento>(entity =>
+        {
+            entity.ToTable(table =>
+            {
+                table.HasCheckConstraint("CK_ItensOrcamento_Quantidade", "[Quantidade] > 0");
+                table.HasCheckConstraint("CK_ItensOrcamento_PrecoUnitario", "[PrecoUnitario] >= 0");
+            });
+            entity.Property(item => item.Descricao).HasMaxLength(200).IsRequired();
+            entity.Property(item => item.Unidade).HasMaxLength(30).IsRequired();
+            entity.Property(item => item.Quantidade).HasPrecision(18, 3);
+            entity.Property(item => item.PrecoUnitario).HasPrecision(18, 2);
         });
     }
 }

@@ -1,0 +1,105 @@
+@model OrcamentoFormulario
+@{
+    ViewData["Title"] = "Novo orçamento";
+    var itensFormulario = Model.Itens ?? [];
+}
+
+<h1 class="h2 mb-4">Novo orçamento</h1>
+
+<form asp-action="Criar" method="post">
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label asp-for="ClienteId" class="form-label"></label>
+            <select asp-for="ClienteId" asp-items="ViewBag.Clientes" class="form-select">
+                <option value="">Selecione um cliente</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Titulo" class="form-label"></label>
+            <input asp-for="Titulo" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="DataEmissao" class="form-label"></label>
+            <input asp-for="DataEmissao" type="date" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Validade" class="form-label"></label>
+            <input asp-for="Validade" type="date" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label asp-for="Observacoes" class="form-label"></label>
+            <textarea asp-for="Observacoes" rows="3" class="form-control"></textarea>
+        </div>
+    </div>
+
+    <h2 class="h5">Itens</h2>
+    <div id="itens">
+        @for (var i = 0; i < itensFormulario.Count; i++)
+        {
+            <div class="row g-2 align-items-end mb-3 item-orcamento">
+                <div class="col-md-4">
+                    <label class="form-label" for="item-descricao-@i">Descrição</label>
+                    <input id="item-descricao-@i" name="Itens[@i].Descricao" value="@itensFormulario[i].Descricao" class="form-control" required maxlength="200" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="item-quantidade-@i">Quantidade</label>
+                    <input id="item-quantidade-@i" name="Itens[@i].Quantidade" value="@itensFormulario[i].Quantidade.ToString("0.###")" class="form-control" inputmode="decimal" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="item-unidade-@i">Unidade</label>
+                    <input id="item-unidade-@i" name="Itens[@i].Unidade" value="@itensFormulario[i].Unidade" class="form-control" required maxlength="30" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="item-preco-@i">Preço unitário (R$)</label>
+                    <input id="item-preco-@i" name="Itens[@i].PrecoUnitario" value="@itensFormulario[i].PrecoUnitario.ToString("0.00")" class="form-control" inputmode="decimal" required />
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger remover-item" aria-label="Remover item">×</button>
+                </div>
+            </div>
+        }
+    </div>
+    <button type="button" id="adicionar-item" class="btn btn-outline-primary mb-4">Adicionar item</button>
+
+    <div>
+        <button type="submit" class="btn btn-primary">Salvar orçamento</button>
+        <a asp-controller="Clientes" asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+</form>
+
+<template id="modelo-item">
+    <div class="row g-2 align-items-end mb-3 item-orcamento">
+        <div class="col-md-4"><label class="form-label" for="item-descricao-0">Descrição</label><input id="item-descricao-0" name="Itens[0].Descricao" class="form-control" required maxlength="200" /></div>
+        <div class="col-md-2"><label class="form-label" for="item-quantidade-0">Quantidade</label><input id="item-quantidade-0" name="Itens[0].Quantidade" value="1" class="form-control" inputmode="decimal" required /></div>
+        <div class="col-md-2"><label class="form-label" for="item-unidade-0">Unidade</label><input id="item-unidade-0" name="Itens[0].Unidade" class="form-control" required maxlength="30" /></div>
+        <div class="col-md-3"><label class="form-label" for="item-preco-0">Preço unitário (R$)</label><input id="item-preco-0" name="Itens[0].PrecoUnitario" value="0,00" class="form-control" inputmode="decimal" required /></div>
+        <div class="col-md-1"><button type="button" class="btn btn-outline-danger remover-item" aria-label="Remover item">×</button></div>
+    </div>
+</template>
+
+<script>
+    const itens = document.getElementById('itens');
+    function renumerarItens() {
+        itens.querySelectorAll('.item-orcamento').forEach((linha, indice) => {
+            linha.querySelectorAll('[name]').forEach(campo => {
+                campo.name = campo.name.replace(/Itens\[\d+\]/, `Itens[${indice}]`);
+                campo.id = campo.id.replace(/-\d+$/, `-${indice}`);
+            });
+            linha.querySelectorAll('label[for]').forEach(label => {
+                label.htmlFor = label.htmlFor.replace(/-\d+$/, `-${indice}`);
+            });
+        });
+    }
+    document.getElementById('adicionar-item').addEventListener('click', () => {
+        itens.append(document.getElementById('modelo-item').content.cloneNode(true));
+        renumerarItens();
+    });
+    itens.addEventListener('click', evento => {
+        if (evento.target.closest('.remover-item')) {
+            evento.target.closest('.item-orcamento').remove();
+            renumerarItens();
+        }
+    });
+</script>

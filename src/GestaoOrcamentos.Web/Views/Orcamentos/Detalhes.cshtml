@@ -1,0 +1,46 @@
+@model Orcamento
+@{
+    ViewData["Title"] = $"Orçamento {Model.Numero}";
+}
+
+<h1 class="h2 mb-3">Orçamento @Model.Numero</h1>
+
+@if (TempData["Mensagem"] is string mensagem)
+{
+    <div class="alert alert-success" role="status">@mensagem</div>
+}
+
+<dl class="row">
+    <dt class="col-sm-3">Situação</dt><dd class="col-sm-9">Rascunho</dd>
+    <dt class="col-sm-3">Cliente</dt><dd class="col-sm-9"><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@Model.ClienteId">@Model.Cliente.Nome</a></dd>
+    <dt class="col-sm-3">Título</dt><dd class="col-sm-9">@Model.Titulo</dd>
+    <dt class="col-sm-3">Data de emissão</dt><dd class="col-sm-9">@Model.DataEmissao.ToString("dd/MM/yyyy")</dd>
+    <dt class="col-sm-3">Validade</dt><dd class="col-sm-9">@(Model.Validade?.ToString("dd/MM/yyyy") ?? "Não informada")</dd>
+</dl>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead><tr><th>Descrição</th><th class="text-end">Quantidade</th><th>Unidade</th><th class="text-end">Preço unitário</th><th class="text-end">Subtotal</th></tr></thead>
+        <tbody>
+            @foreach (var item in Model.Itens.OrderBy(item => item.Id))
+            {
+                <tr>
+                    <td>@item.Descricao</td>
+                    <td class="text-end">@item.Quantidade.ToString("0.###")</td>
+                    <td>@item.Unidade</td>
+                    <td class="text-end">@item.PrecoUnitario.ToString("C")</td>
+                    <td class="text-end">@item.Subtotal.ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot><tr><th colspan="4" class="text-end">Total</th><th class="text-end">@Model.Total.ToString("C")</th></tr></tfoot>
+    </table>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Observacoes))
+{
+    <h2 class="h5">Observações</h2>
+    <p style="white-space: pre-wrap">@Model.Observacoes</p>
+}
+
+<a asp-action="Criar" class="btn btn-outline-primary">Novo orçamento</a>

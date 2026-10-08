@@ -4,6 +4,7 @@ Aplicação web local em ASP.NET Core MVC e Razor Pages utilizando Bootstrap.
 
 Permite cadastrar, pesquisar, consultar, editar e excluir clientes.
 A página de configurações guarda os dados do negócio.
+Também permite criar e consultar orçamentos em rascunho com itens, quantidade, unidade e preço.
 
 ## Arquitetura
 
@@ -19,12 +20,16 @@ Views Razor ↔ ClientesController → ClienteService → GestaoOrcamentosDbCont
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | MVC e Razor              | O controller recebe as requisições, já as views apresentam listagem, detalhes, formulários e erros.                                                      |
 | Razor Pages              | A página `/Configuracoes` apresenta e salva os dados do negócio.                                                                                         |
+| Orçamentos MVC           | Formulário e consulta de rascunhos; `OrcamentoService` valida os itens e grava cabeçalho e linhas numa operação.                                        |
+| Cálculo de valores       | Cada subtotal é arredondado para centavos antes da soma do total, usando `decimal` e `AwayFromZero`. O número exibido usa o ID do banco com seis dígitos. |
 | `ClienteFormulario`      | Modelo usado no cadastro e na edição, com validações por Data Annotations, e o serviço também as verifica antes de gravar.                               |
 | `ClienteService`         | Pesquisa, consulta, normaliza dados e coordena cadastro, edição e exclusão. É registrado como serviço _scoped_ por injeção de dependência.               |
 | Entity Framework Core    | O `DbContext` mapeia clientes e a configuração do negócio, e migrations versionam as tabelas. A configuração possui um único registro, com ID fixo em 1. |
 | Padrão Post/Redirect/Get | Após cadastro ou edição, o POST redireciona aos detalhes. Após exclusão, redireciona à listagem. A confirmação é exibida por `TempData`.                 |
 
 Os POSTs usam token antifalsificação. A exclusão exige uma página de confirmação, e a requisição GET nunca remove dados. As consultas usam `AsNoTracking`, e as operações de banco são assíncronas e recebem o token de cancelamento da requisição. A interface usa cultura `pt-BR`, Bootstrap local e textos em português. Os testes xUnit verificam validações, consultas e persistência em um banco LocalDB temporário.
+
+Para criar um orçamento, cadastre um cliente e use **Novo orçamento** no menu ou na página do cliente. A exclusão de clientes com orçamentos é bloqueada pela aplicação e pelo banco.
 
 ## Requisitos
 

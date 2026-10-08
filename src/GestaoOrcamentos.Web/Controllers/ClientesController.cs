@@ -86,9 +86,23 @@ public class ClientesController(ClienteService clienteService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmarExclusao(int id, CancellationToken cancellationToken)
     {
-        if (!await clienteService.ExcluirAsync(id, cancellationToken))
+        try
         {
-            return NotFound();
+            if (!await clienteService.ExcluirAsync(id, cancellationToken))
+            {
+                return NotFound();
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            var cliente = await clienteService.ObterAsync(id, cancellationToken);
+            if (cliente is null)
+            {
+                return NotFound();
+            }
+
+            ViewData["Erro"] = ex.Message;
+            return View("Excluir", cliente);
         }
 
         TempData["Mensagem"] = "Cliente excluído com sucesso.";
