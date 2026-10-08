@@ -1,0 +1,51 @@
+@model Cliente
+@{
+    ViewData["Title"] = Model.Nome;
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <h1 class="h2 mb-0">@Model.Nome</h1>
+    <div>
+        <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+</div>
+
+@if (TempData["Mensagem"] is string mensagem)
+{
+    <div class="alert alert-success" role="status">@mensagem</div>
+}
+
+<h2 class="h5">Contato</h2>
+<dl class="row">
+    <dt class="col-sm-3">Pessoa de contato</dt>
+    <dd class="col-sm-9">@(Model.PessoaContato ?? "Não informado")</dd>
+    <dt class="col-sm-3">Telefone/WhatsApp</dt>
+    <dd class="col-sm-9">@(Model.Telefone ?? "Não informado")</dd>
+    <dt class="col-sm-3">E-mail</dt>
+    <dd class="col-sm-9">@(Model.Email ?? "Não informado")</dd>
+</dl>
+
+<h2 class="h5">Endereço</h2>
+<dl class="row">
+    <dt class="col-sm-3">CEP</dt>
+    <dd class="col-sm-9">@(Model.Cep ?? "Não informado")</dd>
+    <dt class="col-sm-3">Logradouro</dt>
+    <dd class="col-sm-9">@(Model.Logradouro ?? "Não informado")</dd>
+    <dt class="col-sm-3">Número</dt>
+    <dd class="col-sm-9">@(Model.Numero ?? "Não informado")</dd>
+    <dt class="col-sm-3">Complemento</dt>
+    <dd class="col-sm-9">@(Model.Complemento ?? "Não informado")</dd>
+    <dt class="col-sm-3">Bairro</dt>
+    <dd class="col-sm-9">@(Model.Bairro ?? "Não informado")</dd>
+    <dt class="col-sm-3">Cidade</dt>
+    <dd class="col-sm-9">@(Model.Cidade ?? "Não informado")</dd>
+    <dt class="col-sm-3">UF</dt>
+    <dd class="col-sm-9">@(Model.Uf ?? "Não informado")</dd>
+</dl>
+
+@if (!string.IsNullOrWhiteSpace(Model.Observacoes))
+{
+    <h2 class="h5">Observações</h2>
+    <p style="white-space: pre-wrap">@Model.Observacoes</p>
+}

@@ -1,0 +1,54 @@
+@model ClientesLista
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <h1 class="h2 mb-0">Clientes</h1>
+    <a asp-action="Criar" class="btn btn-primary">Cadastrar cliente</a>
+</div>
+
+<form asp-action="Index" method="get" class="row g-2 mb-4" role="search">
+    <div class="col-sm-8 col-md-6">
+        <label for="busca" class="form-label">Pesquisar por nome</label>
+        <input id="busca" name="busca" value="@Model.Busca" class="form-control" />
+    </div>
+    <div class="col-auto align-self-end">
+        <button type="submit" class="btn btn-outline-primary">Pesquisar</button>
+    </div>
+</form>
+
+@if (Model.Clientes.Count == 0)
+{
+    <p>Nenhum cliente encontrado.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Nome</th>
+                    <th scope="col">Telefone</th>
+                    <th scope="col">E-mail</th>
+                    <th scope="col">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cliente in Model.Clientes)
+                {
+                    <tr>
+                        <td>@cliente.Nome</td>
+                        <td>@cliente.Telefone</td>
+                        <td>@cliente.Email</td>
+                        <td>
+                            <a asp-action="Detalhes" asp-route-id="@cliente.Id">Consultar</a>
+                            <span aria-hidden="true">·</span>
+                            <a asp-action="Editar" asp-route-id="@cliente.Id">Editar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

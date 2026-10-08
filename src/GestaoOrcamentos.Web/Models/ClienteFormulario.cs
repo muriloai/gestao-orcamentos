@@ -2,8 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace GestaoOrcamentos.Web.Models;
 
-public class ClienteCadastro
+public class ClienteFormulario
 {
+    public int Id { get; set; }
+
     [Required(ErrorMessage = "Informe o nome.")]
     [StringLength(150, ErrorMessage = "O nome deve ter no máximo 150 caracteres.")]
     [Display(Name = "Nome")]
@@ -52,4 +54,21 @@ public class ClienteCadastro
 
     [Display(Name = "Observações")]
     public string? Observacoes { get; set; }
+
+    public static ClienteFormulario DoCliente(Cliente cliente) => new()
+    {
+        Id = cliente.Id,
+        Nome = cliente.Nome,
+        PessoaContato = cliente.PessoaContato,
+        Telefone = cliente.Telefone,
+        Email = cliente.Email,
+        Cep = cliente.Cep,
+        Logradouro = cliente.Logradouro,
+        Numero = cliente.Numero,
+        Complemento = cliente.Complemento,
+        Bairro = cliente.Bairro,
+        Cidade = cliente.Cidade,
+        Uf = cliente.Uf,
+        Observacoes = cliente.Observacoes
+    };
 }

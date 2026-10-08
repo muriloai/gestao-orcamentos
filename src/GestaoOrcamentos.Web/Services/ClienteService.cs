@@ -3,33 +3,77 @@ using System.ComponentModel.DataAnnotations;
 using GestaoOrcamentos.Web.Data;
 using GestaoOrcamentos.Web.Models;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace GestaoOrcamentos.Web.Services;
 
 public class ClienteService(GestaoOrcamentosDbContext dbContext)
 {
-    public async Task<int> CadastrarAsync(ClienteCadastro cadastro, CancellationToken cancellationToken)
+    public async Task<List<Cliente>> ListarAsync(string? busca, CancellationToken cancellationToken)
     {
-        Validator.ValidateObject(cadastro, new ValidationContext(cadastro), validateAllProperties: true);
+        var consulta = dbContext.Clientes.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            var termo = busca.Trim();
+            consulta = consulta.Where(cliente => cliente.Nome.Contains(termo));
+        }
+
+        return await consulta.OrderBy(cliente => cliente.Nome)
+            .ThenBy(cliente => cliente.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<Cliente?> ObterAsync(int id, CancellationToken cancellationToken) =>
+        dbContext.Clientes.AsNoTracking().SingleOrDefaultAsync(cliente => cliente.Id == id, cancellationToken);
+
+    public async Task<int> CadastrarAsync(ClienteFormulario formulario, CancellationToken cancellationToken)
+    {
+        Validar(formulario);
 
         var cliente = new Cliente
         {
-            Nome = cadastro.Nome.Trim(),
-            PessoaContato = cadastro.PessoaContato?.Trim(),
-            Telefone = cadastro.Telefone?.Trim(),
-            Email = cadastro.Email?.Trim(),
-            Cep = cadastro.Cep?.Trim(),
-            Logradouro = cadastro.Logradouro?.Trim(),
-            Numero = cadastro.Numero?.Trim(),
-            Complemento = cadastro.Complemento?.Trim(),
-            Bairro = cadastro.Bairro?.Trim(),
-            Cidade = cadastro.Cidade?.Trim(),
-            Uf = cadastro.Uf?.Trim(),
-            Observacoes = cadastro.Observacoes?.Trim()
+            Nome = formulario.Nome
         };
+        AplicarDados(cliente, formulario);
 
         dbContext.Clientes.Add(cliente);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return cliente.Id;
+    }
+
+    public async Task<bool> AtualizarAsync(int id, ClienteFormulario formulario, CancellationToken cancellationToken)
+    {
+        var cliente = await dbContext.Clientes.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (cliente is null)
+        {
+            return false;
+        }
+
+        Validar(formulario);
+        AplicarDados(cliente, formulario);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
+    private static void Validar(ClienteFormulario formulario) =>
+        Validator.ValidateObject(formulario, new ValidationContext(formulario), validateAllProperties: true);
+
+    private static void AplicarDados(Cliente cliente, ClienteFormulario formulario)
+    {
+        cliente.Nome = formulario.Nome.Trim();
+        cliente.PessoaContato = formulario.PessoaContato?.Trim();
+        cliente.Telefone = formulario.Telefone?.Trim();
+        cliente.Email = formulario.Email?.Trim();
+        cliente.Cep = formulario.Cep?.Trim();
+        cliente.Logradouro = formulario.Logradouro?.Trim();
+        cliente.Numero = formulario.Numero?.Trim();
+        cliente.Complemento = formulario.Complemento?.Trim();
+        cliente.Bairro = formulario.Bairro?.Trim();
+        cliente.Cidade = formulario.Cidade?.Trim();
+        cliente.Uf = formulario.Uf?.Trim();
+        cliente.Observacoes = formulario.Observacoes?.Trim();
     }
 }
