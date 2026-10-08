@@ -73,4 +73,25 @@ public class ClientesController(ClienteService clienteService) : Controller
         TempData["Mensagem"] = "Cliente atualizado com sucesso.";
         return RedirectToAction(nameof(Detalhes), new { id });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Excluir(int id, CancellationToken cancellationToken)
+    {
+        var cliente = await clienteService.ObterAsync(id, cancellationToken);
+        return cliente is null ? NotFound() : View(cliente);
+    }
+
+    [HttpPost]
+    [ActionName(nameof(Excluir))]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmarExclusao(int id, CancellationToken cancellationToken)
+    {
+        if (!await clienteService.ExcluirAsync(id, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        TempData["Mensagem"] = "Cliente excluído com sucesso.";
+        return RedirectToAction(nameof(Index));
+    }
 }

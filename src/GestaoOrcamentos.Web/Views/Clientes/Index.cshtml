@@ -3,6 +3,11 @@
     ViewData["Title"] = "Clientes";
 }
 
+@if (TempData["Mensagem"] is string mensagem)
+{
+    <div class="alert alert-success" role="status">@mensagem</div>
+}
+
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <h1 class="h2 mb-0">Clientes</h1>
     <a asp-action="Criar" class="btn btn-primary">Cadastrar cliente</a>

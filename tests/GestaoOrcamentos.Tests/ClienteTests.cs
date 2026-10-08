@@ -116,4 +116,53 @@ public class ClienteTests
             await setup.Database.EnsureDeletedAsync();
         }
     }
+
+    [Fact]
+    public async Task ExclusaoRemoveApenasOClienteSelecionado()
+    {
+        var databaseName = $"GestaoOrcamentos_Teste_{Guid.NewGuid():N}";
+        var connectionString = $"Server=(localdb)\\MSSQLLocalDB;Database={databaseName};Trusted_Connection=True;TrustServerCertificate=True";
+        var options = new DbContextOptionsBuilder<GestaoOrcamentosDbContext>()
+            .UseSqlServer(connectionString)
+            .Options;
+
+        await using var setup = new GestaoOrcamentosDbContext(options);
+
+        try
+        {
+            await setup.Database.MigrateAsync();
+
+            int excluidoId;
+            int preservadoId;
+            await using (var escrita = new GestaoOrcamentosDbContext(options))
+            {
+                var service = new ClienteService(escrita);
+                excluidoId = await service.CadastrarAsync(new ClienteFormulario { Nome = "Excluir" },
+                    CancellationToken.None);
+                preservadoId = await service.CadastrarAsync(new ClienteFormulario { Nome = "Preservar" },
+                    CancellationToken.None);
+            }
+
+            await using (var exclusao = new GestaoOrcamentosDbContext(options))
+            {
+                var service = new ClienteService(exclusao);
+
+                Assert.True(await service.ExcluirAsync(excluidoId, CancellationToken.None));
+                Assert.False(await service.ExcluirAsync(excluidoId, CancellationToken.None));
+                Assert.False(await service.ExcluirAsync(-1, CancellationToken.None));
+            }
+
+            await using (var confirmacao = new GestaoOrcamentosDbContext(options))
+            {
+                var restantes = await confirmacao.Clientes.AsNoTracking().ToListAsync();
+
+                Assert.Single(restantes);
+                Assert.Equal(preservadoId, restantes[0].Id);
+            }
+        }
+        finally
+        {
+            await setup.Database.EnsureDeletedAsync();
+        }
+    }
 }

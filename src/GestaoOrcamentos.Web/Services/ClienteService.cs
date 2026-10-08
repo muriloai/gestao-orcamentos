@@ -58,6 +58,20 @@ public class ClienteService(GestaoOrcamentosDbContext dbContext)
         return true;
     }
 
+    public async Task<bool> ExcluirAsync(int id, CancellationToken cancellationToken)
+    {
+        var cliente = await dbContext.Clientes.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (cliente is null)
+        {
+            return false;
+        }
+
+        dbContext.Clientes.Remove(cliente);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
     private static void Validar(ClienteFormulario formulario) =>
         Validator.ValidateObject(formulario, new ValidationContext(formulario), validateAllProperties: true);
 
