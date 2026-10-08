@@ -3,6 +3,7 @@ using GestaoOrcamentos.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestaoOrcamentos.Web.Data.Migrations
 {
     [DbContext(typeof(GestaoOrcamentosDbContext))]
-    partial class GestaoOrcamentosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008202943_ConfiguracaoNegocio")]
+    partial class ConfiguracaoNegocio
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

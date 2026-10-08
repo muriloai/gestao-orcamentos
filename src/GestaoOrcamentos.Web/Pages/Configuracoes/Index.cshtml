@@ -1,0 +1,80 @@
+@page
+@model GestaoOrcamentos.Web.Pages.Configuracoes.IndexModel
+@{
+    ViewData["Title"] = "Configurações do negócio";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h2 mb-3">Configurações do negócio</h1>
+
+        @if (TempData["Mensagem"] is string mensagem)
+        {
+            <div class="alert alert-success" role="status">@mensagem</div>
+        }
+
+        <form method="post" asp-antiforgery="true">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Configuracao.Nome" class="form-label"></label>
+                <input asp-for="Configuracao.Nome" class="form-control" />
+                <span asp-validation-for="Configuracao.Nome" class="text-danger"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Configuracao.Telefone" class="form-label"></label>
+                    <input asp-for="Configuracao.Telefone" class="form-control" autocomplete="tel" />
+                    <span asp-validation-for="Configuracao.Telefone" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Configuracao.Email" class="form-label"></label>
+                    <input asp-for="Configuracao.Email" class="form-control" autocomplete="email" />
+                    <span asp-validation-for="Configuracao.Email" class="text-danger"></span>
+                </div>
+            </div>
+
+            <h2 class="h5 mt-4">Endereço</h2>
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label asp-for="Configuracao.Cep" class="form-label"></label>
+                    <input asp-for="Configuracao.Cep" class="form-control" inputmode="numeric" autocomplete="postal-code" />
+                    <span asp-validation-for="Configuracao.Cep" class="text-danger"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Configuracao.Logradouro" class="form-label"></label>
+                    <input asp-for="Configuracao.Logradouro" class="form-control" autocomplete="street-address" />
+                    <span asp-validation-for="Configuracao.Logradouro" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Configuracao.Numero" class="form-label"></label>
+                    <input asp-for="Configuracao.Numero" class="form-control" />
+                    <span asp-validation-for="Configuracao.Numero" class="text-danger"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Configuracao.Complemento" class="form-label"></label>
+                    <input asp-for="Configuracao.Complemento" class="form-control" />
+                    <span asp-validation-for="Configuracao.Complemento" class="text-danger"></span>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="Configuracao.Bairro" class="form-label"></label>
+                    <input asp-for="Configuracao.Bairro" class="form-control" />
+                    <span asp-validation-for="Configuracao.Bairro" class="text-danger"></span>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="Configuracao.Cidade" class="form-label"></label>
+                    <input asp-for="Configuracao.Cidade" class="form-control" />
+                    <span asp-validation-for="Configuracao.Cidade" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="Configuracao.Uf" class="form-label"></label>
+                    <input asp-for="Configuracao.Uf" class="form-control" maxlength="2" />
+                    <span asp-validation-for="Configuracao.Uf" class="text-danger"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salvar configurações</button>
+        </form>
+    </div>
+</div>
