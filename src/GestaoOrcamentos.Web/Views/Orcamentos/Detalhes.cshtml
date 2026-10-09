@@ -5,6 +5,11 @@
 
 <h1 class="h2 mb-3">Orçamento @Model.Numero</h1>
 
+<div class="d-flex gap-2 mb-4">
+    <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
+    <a asp-action="Excluir" asp-route-id="@Model.Id" class="btn btn-outline-danger">Excluir</a>
+</div>
+
 @if (TempData["Mensagem"] is string mensagem)
 {
     <div class="alert alert-success" role="status">@mensagem</div>

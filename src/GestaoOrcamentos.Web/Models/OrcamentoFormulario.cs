@@ -4,6 +4,8 @@ namespace GestaoOrcamentos.Web.Models;
 
 public record class OrcamentoFormulario : IValidatableObject
 {
+    public int Id { get; set; }
+
     [Range(1, int.MaxValue, ErrorMessage = "Selecione um cliente.")]
     [Display(Name = "Cliente")]
     public int ClienteId { get; set; }
@@ -32,10 +34,30 @@ public record class OrcamentoFormulario : IValidatableObject
             yield return new ValidationResult("Adicione pelo menos um item.", [nameof(Itens)]);
         }
     }
+
+    public static OrcamentoFormulario DoOrcamento(Orcamento orcamento) => new()
+    {
+        Id = orcamento.Id,
+        ClienteId = orcamento.ClienteId,
+        Titulo = orcamento.Titulo,
+        DataEmissao = orcamento.DataEmissao,
+        Validade = orcamento.Validade,
+        Observacoes = orcamento.Observacoes,
+        Itens = orcamento.Itens.OrderBy(item => item.Id).Select(item => new ItemOrcamentoFormulario
+        {
+            Id = item.Id,
+            Descricao = item.Descricao,
+            Quantidade = item.Quantidade,
+            Unidade = item.Unidade,
+            PrecoUnitario = item.PrecoUnitario
+        }).ToList()
+    };
 }
 
 public class ItemOrcamentoFormulario
 {
+    public int Id { get; set; }
+
     [Required(ErrorMessage = "Informe a descrição.")]
     [StringLength(200)]
     [Display(Name = "Descrição")]
