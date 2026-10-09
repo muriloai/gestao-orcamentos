@@ -4,7 +4,7 @@ Aplicação web local em ASP.NET Core MVC e Razor Pages utilizando Bootstrap.
 
 Permite cadastrar, pesquisar, consultar, editar e excluir clientes.
 A página de configurações guarda os dados do negócio.
-Também permite criar, consultar, editar e excluir orçamentos em rascunho com itens, quantidade, unidade e preço.
+Também permite criar, pesquisar, consultar, editar e excluir orçamentos em rascunho com itens, quantidade, unidade e preço.
 
 ## Arquitetura
 
@@ -20,7 +20,7 @@ Views Razor ↔ ClientesController → ClienteService → GestaoOrcamentosDbCont
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | MVC e Razor              | O controller recebe as requisições, já as views apresentam listagem, detalhes, formulários e erros.                                                      |
 | Razor Pages              | A página `/Configuracoes` apresenta e salva os dados do negócio.                                                                                         |
-| Orçamentos MVC           | Criação, consulta, edição e exclusão de rascunhos; `OrcamentoService` valida os itens e grava cabeçalho e linhas numa operação.                          |
+| Orçamentos MVC           | Listagem, pesquisa, criação, consulta, edição e exclusão de rascunhos; `OrcamentoService` valida os itens e grava cabeçalho e linhas numa operação.      |
 | Cálculo de valores       | Cada subtotal é arredondado para centavos antes da soma do total, usando `decimal` e `AwayFromZero`. O número exibido usa o ID do banco com seis dígitos. |
 | `ClienteFormulario`      | Modelo usado no cadastro e na edição, com validações por Data Annotations, e o serviço também as verifica antes de gravar.                               |
 | `ClienteService`         | Pesquisa, consulta, normaliza dados e coordena cadastro, edição e exclusão. É registrado como serviço _scoped_ por injeção de dependência.               |
@@ -31,6 +31,7 @@ Os POSTs usam token antifalsificação. A exclusão exige uma página de confirm
 
 Para criar um orçamento, cadastre um cliente e use **Novo orçamento** no menu ou na página do cliente. A exclusão de clientes com orçamentos é bloqueada pela aplicação e pelo banco.
 Na página do orçamento, **Editar** permite alterar os dados e adicionar ou remover itens; **Excluir** exige confirmação. Uma edição inválida não grava parte das alterações.
+A lista **Orçamentos** permite pesquisar pelo nome do cliente ou pelo título. A página de cada cliente mostra seus orçamentos vinculados.
 
 ## Requisitos
 

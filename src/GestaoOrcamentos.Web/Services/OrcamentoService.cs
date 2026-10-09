@@ -9,6 +9,29 @@ namespace GestaoOrcamentos.Web.Services;
 
 public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
 {
+    public async Task<List<Orcamento>> ListarAsync(string? busca, int? clienteId, CancellationToken cancellationToken)
+    {
+        var consulta = dbContext.Orcamentos.AsNoTracking().AsQueryable();
+
+        if (clienteId is not null)
+        {
+            consulta = consulta.Where(orcamento => orcamento.ClienteId == clienteId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            var termo = busca.Trim();
+            consulta = consulta.Where(orcamento =>
+                orcamento.Titulo.Contains(termo) || orcamento.Cliente.Nome.Contains(termo));
+        }
+
+        return await consulta.Include(orcamento => orcamento.Cliente)
+            .Include(orcamento => orcamento.Itens)
+            .OrderByDescending(orcamento => orcamento.DataEmissao)
+            .ThenByDescending(orcamento => orcamento.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<Orcamento?> ObterAsync(int id, CancellationToken cancellationToken) =>
         dbContext.Orcamentos.AsNoTracking()
             .Include(orcamento => orcamento.Cliente)

@@ -1,0 +1,54 @@
+@model OrcamentosLista
+@{
+    ViewData["Title"] = "Orçamentos";
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <h1 class="h2 mb-0">Orçamentos</h1>
+    <a asp-action="Criar" class="btn btn-primary">Novo orçamento</a>
+</div>
+
+<form asp-action="Index" method="get" class="row g-2 mb-4" role="search">
+    <div class="col-sm-8 col-md-6">
+        <label for="busca" class="form-label">Pesquisar por cliente ou título</label>
+        <input id="busca" name="busca" value="@Model.Busca" class="form-control" />
+    </div>
+    <div class="col-auto align-self-end">
+        <button type="submit" class="btn btn-outline-primary">Pesquisar</button>
+    </div>
+</form>
+
+@if (Model.Orcamentos.Count == 0)
+{
+    <p>Nenhum orçamento encontrado.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Número</th>
+                    <th scope="col">Emissão</th>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Título</th>
+                    <th scope="col" class="text-end">Total</th>
+                    <th scope="col">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var orcamento in Model.Orcamentos)
+                {
+                    <tr>
+                        <td>@orcamento.Numero</td>
+                        <td>@orcamento.DataEmissao.ToString("dd/MM/yyyy")</td>
+                        <td><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@orcamento.ClienteId">@orcamento.Cliente.Nome</a></td>
+                        <td>@orcamento.Titulo</td>
+                        <td class="text-end">@orcamento.Total.ToString("C")</td>
+                        <td><a asp-action="Detalhes" asp-route-id="@orcamento.Id">Consultar</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -11,6 +11,13 @@ namespace GestaoOrcamentos.Web.Controllers;
 public class OrcamentosController(OrcamentoService orcamentoService, ClienteService clienteService) : Controller
 {
     [HttpGet]
+    public async Task<IActionResult> Index(string? busca, CancellationToken cancellationToken)
+    {
+        var orcamentos = await orcamentoService.ListarAsync(busca, null, cancellationToken);
+        return View(new OrcamentosLista(busca, orcamentos));
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Criar(int? clienteId, CancellationToken cancellationToken)
     {
         await CarregarClientesAsync(cancellationToken);

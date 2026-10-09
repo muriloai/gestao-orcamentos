@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GestaoOrcamentos.Web.Controllers;
 
-public class ClientesController(ClienteService clienteService) : Controller
+public class ClientesController(ClienteService clienteService, OrcamentoService orcamentoService) : Controller
 {
     [HttpGet]
     public async Task<IActionResult> Index(string? busca, CancellationToken cancellationToken)
@@ -18,7 +18,13 @@ public class ClientesController(ClienteService clienteService) : Controller
     public async Task<IActionResult> Detalhes(int id, CancellationToken cancellationToken)
     {
         var cliente = await clienteService.ObterAsync(id, cancellationToken);
-        return cliente is null ? NotFound() : View(cliente);
+        if (cliente is null)
+        {
+            return NotFound();
+        }
+
+        var orcamentos = await orcamentoService.ListarAsync(null, id, cancellationToken);
+        return View(new ClienteDetalhes(cliente, orcamentos));
     }
 
     [HttpGet]
