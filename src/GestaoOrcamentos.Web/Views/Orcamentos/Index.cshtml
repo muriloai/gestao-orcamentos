@@ -13,6 +13,12 @@
         <label for="busca" class="form-label">Pesquisar por cliente ou título</label>
         <input id="busca" name="busca" value="@Model.Busca" class="form-control" />
     </div>
+    <div class="col-sm-4 col-md-3">
+        <label asp-for="Situacao" class="form-label">Situação</label>
+        <select asp-for="Situacao" asp-items="Html.GetEnumSelectList<SituacaoOrcamento>()" class="form-select">
+            <option value="">Todas</option>
+        </select>
+    </div>
     <div class="col-auto align-self-end">
         <button type="submit" class="btn btn-outline-primary">Pesquisar</button>
     </div>
@@ -32,6 +38,7 @@ else
                     <th scope="col">Emissão</th>
                     <th scope="col">Cliente</th>
                     <th scope="col">Título</th>
+                    <th scope="col">Situação</th>
                     <th scope="col" class="text-end">Total</th>
                     <th scope="col">Ação</th>
                 </tr>
@@ -42,8 +49,9 @@ else
                     <tr>
                         <td>@orcamento.Numero</td>
                         <td>@orcamento.DataEmissao.ToString("dd/MM/yyyy")</td>
-                        <td><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@orcamento.ClienteId">@orcamento.Cliente.Nome</a></td>
+                        <td><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@orcamento.ClienteId">@orcamento.NomeClienteApresentado</a></td>
                         <td>@orcamento.Titulo</td>
+                        <td>@orcamento.SituacaoTexto</td>
                         <td class="text-end">@orcamento.Total.ToString("C")</td>
                         <td><a asp-action="Detalhes" asp-route-id="@orcamento.Id">Consultar</a></td>
                     </tr>

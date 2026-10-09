@@ -11,10 +11,16 @@ namespace GestaoOrcamentos.Web.Controllers;
 public class OrcamentosController(OrcamentoService orcamentoService, ClienteService clienteService) : Controller
 {
     [HttpGet]
-    public async Task<IActionResult> Index(string? busca, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string? busca, SituacaoOrcamento? situacao,
+        CancellationToken cancellationToken)
     {
-        var orcamentos = await orcamentoService.ListarAsync(busca, null, cancellationToken);
-        return View(new OrcamentosLista(busca, orcamentos));
+        if (!ModelState.IsValid || (situacao is not null && !Enum.IsDefined(situacao.Value)))
+        {
+            return BadRequest();
+        }
+
+        var orcamentos = await orcamentoService.ListarAsync(busca, null, cancellationToken, situacao);
+        return View(new OrcamentosLista(busca, situacao, orcamentos));
     }
 
     [HttpGet]
@@ -65,6 +71,20 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
         return orcamento is null ? NotFound() : View(orcamento);
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Duplicar(int id, CancellationToken cancellationToken)
+    {
+        var novoId = await orcamentoService.DuplicarAsync(id, cancellationToken);
+        if (novoId is null)
+        {
+            return NotFound();
+        }
+
+        TempData["Mensagem"] = "Orçamento duplicado como novo rascunho.";
+        return RedirectToAction(nameof(Detalhes), new { id = novoId });
+    }
+
     [HttpGet]
     public async Task<IActionResult> Editar(int id, CancellationToken cancellationToken)
     {
@@ -72,6 +92,11 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
         if (orcamento is null)
         {
             return NotFound();
+        }
+
+        if (orcamento.Situacao != SituacaoOrcamento.Rascunho)
+        {
+            return Conflict("Somente rascunhos podem ser editados.");
         }
 
         await CarregarClientesAsync(cancellationToken);
@@ -83,9 +108,15 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
     public async Task<IActionResult> Editar(int id, OrcamentoFormulario formulario, CancellationToken cancellationToken)
     {
         formulario.Id = id;
-        if (await orcamentoService.ObterAsync(id, cancellationToken) is null)
+        var orcamento = await orcamentoService.ObterAsync(id, cancellationToken);
+        if (orcamento is null)
         {
             return NotFound();
+        }
+
+        if (orcamento.Situacao != SituacaoOrcamento.Rascunho)
+        {
+            return Conflict("Somente rascunhos podem ser editados.");
         }
 
         if (ModelState.IsValid && await clienteService.ObterAsync(formulario.ClienteId, cancellationToken) is null)
@@ -109,9 +140,9 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
-                ModelState.AddModelError(nameof(formulario.ClienteId), "Cliente não encontrado.");
+                return Conflict(ex.Message);
             }
         }
 
@@ -123,7 +154,13 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
     public async Task<IActionResult> Excluir(int id, CancellationToken cancellationToken)
     {
         var orcamento = await orcamentoService.ObterAsync(id, cancellationToken);
-        return orcamento is null ? NotFound() : View(orcamento);
+        if (orcamento is null)
+        {
+            return NotFound();
+        }
+
+        return orcamento.Situacao == SituacaoOrcamento.Rascunho
+            ? View(orcamento) : Conflict("Somente rascunhos podem ser excluídos.");
     }
 
     [HttpPost]
@@ -131,7 +168,15 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmarExclusao(int id, CancellationToken cancellationToken)
     {
-        var clienteId = await orcamentoService.ExcluirAsync(id, cancellationToken);
+        int? clienteId;
+        try
+        {
+            clienteId = await orcamentoService.ExcluirAsync(id, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
         if (clienteId is null)
         {
             return NotFound();
@@ -139,6 +184,32 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
 
         TempData["Mensagem"] = "Orçamento excluído com sucesso.";
         return RedirectToAction("Detalhes", "Clientes", new { id = clienteId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AlterarSituacao(int id, SituacaoOrcamento destino, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid || !Enum.IsDefined(destino))
+        {
+            return BadRequest();
+        }
+
+        try
+        {
+            if (!await orcamentoService.AlterarSituacaoAsync(id, destino, cancellationToken))
+            {
+                return NotFound();
+            }
+
+            TempData["Mensagem"] = "Situação do orçamento atualizada com sucesso.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Erro"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Detalhes), new { id });
     }
 
     private async Task CarregarClientesAsync(CancellationToken cancellationToken)

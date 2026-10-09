@@ -5,23 +5,60 @@
 
 <h1 class="h2 mb-3">Orçamento @Model.Numero</h1>
 
-<div class="d-flex gap-2 mb-4">
-    <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
-    <a asp-action="Excluir" asp-route-id="@Model.Id" class="btn btn-outline-danger">Excluir</a>
+<div class="d-flex flex-wrap gap-2 mb-4">
+    @if (Model.Situacao == SituacaoOrcamento.Rascunho)
+    {
+        <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
+        <a asp-action="Excluir" asp-route-id="@Model.Id" class="btn btn-outline-danger">Excluir</a>
+        <form asp-action="AlterarSituacao" asp-route-id="@Model.Id" method="post">
+            <input type="hidden" name="destino" value="@((int)SituacaoOrcamento.Pendente)" />
+            <button type="submit" class="btn btn-outline-primary">Marcar como pendente</button>
+        </form>
+    }
+    else if (Model.Situacao == SituacaoOrcamento.Pendente)
+    {
+        <form asp-action="AlterarSituacao" asp-route-id="@Model.Id" method="post">
+            <input type="hidden" name="destino" value="@((int)SituacaoOrcamento.Aprovado)" />
+            <button type="submit" class="btn btn-success">Aprovar</button>
+        </form>
+        <form asp-action="AlterarSituacao" asp-route-id="@Model.Id" method="post">
+            <input type="hidden" name="destino" value="@((int)SituacaoOrcamento.Recusado)" />
+            <button type="submit" class="btn btn-outline-danger">Recusar</button>
+        </form>
+        <form asp-action="AlterarSituacao" asp-route-id="@Model.Id" method="post">
+            <input type="hidden" name="destino" value="@((int)SituacaoOrcamento.Rascunho)" />
+            <button type="submit" class="btn btn-outline-secondary">Devolver ao rascunho</button>
+        </form>
+    }
+    <form asp-action="Duplicar" asp-route-id="@Model.Id" method="post">
+        <button type="submit" class="btn btn-outline-primary">Duplicar como rascunho</button>
+    </form>
 </div>
 
 @if (TempData["Mensagem"] is string mensagem)
 {
     <div class="alert alert-success" role="status">@mensagem</div>
 }
+@if (TempData["Erro"] is string erro)
+{
+    <div class="alert alert-danger" role="alert">@erro</div>
+}
 
 <dl class="row">
-    <dt class="col-sm-3">Situação</dt><dd class="col-sm-9">Rascunho</dd>
-    <dt class="col-sm-3">Cliente</dt><dd class="col-sm-9"><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@Model.ClienteId">@Model.Cliente.Nome</a></dd>
+    <dt class="col-sm-3">Situação</dt><dd class="col-sm-9">@Model.SituacaoTexto</dd>
+    <dt class="col-sm-3">Cliente</dt><dd class="col-sm-9"><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@Model.ClienteId">@Model.NomeClienteApresentado</a></dd>
     <dt class="col-sm-3">Título</dt><dd class="col-sm-9">@Model.Titulo</dd>
     <dt class="col-sm-3">Data de emissão</dt><dd class="col-sm-9">@Model.DataEmissao.ToString("dd/MM/yyyy")</dd>
     <dt class="col-sm-3">Validade</dt><dd class="col-sm-9">@(Model.Validade?.ToString("dd/MM/yyyy") ?? "Não informada")</dd>
 </dl>
+
+@if (Model.Situacao != SituacaoOrcamento.Rascunho)
+{
+    <h2 class="h5">Dados do negócio registrados</h2>
+    <partial name="_DadosParte" model="Model.NegocioRegistrado" />
+    <h2 class="h5">Dados do cliente registrados</h2>
+    <partial name="_DadosParte" model="Model.ClienteRegistrado" />
+}
 
 <div class="table-responsive">
     <table class="table table-striped align-middle">

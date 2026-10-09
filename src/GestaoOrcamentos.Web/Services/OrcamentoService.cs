@@ -9,9 +9,20 @@ namespace GestaoOrcamentos.Web.Services;
 
 public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
 {
-    public async Task<List<Orcamento>> ListarAsync(string? busca, int? clienteId, CancellationToken cancellationToken)
+    public async Task<List<Orcamento>> ListarAsync(string? busca, int? clienteId, CancellationToken cancellationToken,
+        SituacaoOrcamento? situacao = null)
     {
         var consulta = dbContext.Orcamentos.AsNoTracking().AsQueryable();
+
+        if (situacao is not null)
+        {
+            if (!Enum.IsDefined(situacao.Value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(situacao));
+            }
+
+            consulta = consulta.Where(orcamento => orcamento.Situacao == situacao);
+        }
 
         if (clienteId is not null)
         {
@@ -22,7 +33,9 @@ public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
         {
             var termo = busca.Trim();
             consulta = consulta.Where(orcamento =>
-                orcamento.Titulo.Contains(termo) || orcamento.Cliente.Nome.Contains(termo));
+                orcamento.Titulo.Contains(termo) ||
+                (orcamento.Situacao == SituacaoOrcamento.Rascunho && orcamento.Cliente.Nome.Contains(termo)) ||
+                (orcamento.Situacao != SituacaoOrcamento.Rascunho && orcamento.ClienteRegistrado!.Nome.Contains(termo)));
         }
 
         return await consulta.Include(orcamento => orcamento.Cliente)
@@ -66,6 +79,36 @@ public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
         return orcamento.Id;
     }
 
+    public async Task<int?> DuplicarAsync(int id, CancellationToken cancellationToken)
+    {
+        var original = await dbContext.Orcamentos.AsNoTracking()
+            .Include(orcamento => orcamento.Itens)
+            .SingleOrDefaultAsync(orcamento => orcamento.Id == id, cancellationToken);
+        if (original is null)
+        {
+            return null;
+        }
+
+        var hoje = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo")));
+        var formulario = new OrcamentoFormulario
+        {
+            ClienteId = original.ClienteId,
+            Titulo = original.Titulo,
+            DataEmissao = hoje,
+            Observacoes = original.Observacoes,
+            Itens = original.Itens.OrderBy(item => item.Id).Select(item => new ItemOrcamentoFormulario
+            {
+                Descricao = item.Descricao,
+                Quantidade = item.Quantidade,
+                Unidade = item.Unidade,
+                PrecoUnitario = item.PrecoUnitario
+            }).ToList()
+        };
+
+        return await CadastrarAsync(formulario, cancellationToken);
+    }
+
     public async Task<bool> AtualizarAsync(int id, OrcamentoFormulario formulario, CancellationToken cancellationToken)
     {
         var orcamento = await dbContext.Orcamentos.Include(item => item.Itens)
@@ -73,6 +116,11 @@ public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
         if (orcamento is null)
         {
             return false;
+        }
+
+        if (orcamento.Situacao != SituacaoOrcamento.Rascunho)
+        {
+            throw new InvalidOperationException("Somente rascunhos podem ser editados.");
         }
 
         var itens = Validar(formulario);
@@ -129,9 +177,59 @@ public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
             return null;
         }
 
+        if (orcamento.Situacao != SituacaoOrcamento.Rascunho)
+        {
+            throw new InvalidOperationException("Somente rascunhos podem ser excluídos.");
+        }
+
         dbContext.Orcamentos.Remove(orcamento);
         await dbContext.SaveChangesAsync(cancellationToken);
         return orcamento.ClienteId;
+    }
+
+    public async Task<bool> AlterarSituacaoAsync(int id, SituacaoOrcamento destino, CancellationToken cancellationToken)
+    {
+        var orcamento = await dbContext.Orcamentos.Include(item => item.Cliente)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (orcamento is null)
+        {
+            return false;
+        }
+
+        var permitida = (orcamento.Situacao, destino) switch
+        {
+            (SituacaoOrcamento.Rascunho, SituacaoOrcamento.Pendente) => true,
+            (SituacaoOrcamento.Pendente, SituacaoOrcamento.Aprovado) => true,
+            (SituacaoOrcamento.Pendente, SituacaoOrcamento.Recusado) => true,
+            (SituacaoOrcamento.Pendente, SituacaoOrcamento.Rascunho) => true,
+            _ => false
+        };
+        if (!permitida)
+        {
+            throw new InvalidOperationException("Essa mudança de situação não é permitida.");
+        }
+
+        if (destino == SituacaoOrcamento.Pendente)
+        {
+            var negocio = await dbContext.ConfiguracoesNegocio.AsNoTracking()
+                .SingleOrDefaultAsync(item => item.Id == 1, cancellationToken);
+            if (negocio is null)
+            {
+                throw new InvalidOperationException("Configure os dados do negócio antes de marcar o orçamento como pendente.");
+            }
+
+            orcamento.ClienteRegistrado = DadosParteOrcamento.DoCliente(orcamento.Cliente);
+            orcamento.NegocioRegistrado = DadosParteOrcamento.DoNegocio(negocio);
+        }
+        else if (destino == SituacaoOrcamento.Rascunho)
+        {
+            orcamento.ClienteRegistrado = null;
+            orcamento.NegocioRegistrado = null;
+        }
+
+        orcamento.Situacao = destino;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     private static List<ItemOrcamentoFormulario> Validar(OrcamentoFormulario formulario)

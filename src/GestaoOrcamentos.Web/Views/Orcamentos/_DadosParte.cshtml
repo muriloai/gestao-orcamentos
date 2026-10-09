@@ -1,0 +1,49 @@
+@model DadosParteOrcamento
+
+<dl class="row">
+    <dt class="col-sm-3">Nome</dt><dd class="col-sm-9">@Model.Nome</dd>
+    @if (!string.IsNullOrWhiteSpace(Model.PessoaContato))
+    {
+        <dt class="col-sm-3">Pessoa de contato</dt><dd class="col-sm-9">@Model.PessoaContato</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Telefone))
+    {
+        <dt class="col-sm-3">Telefone</dt><dd class="col-sm-9">@Model.Telefone</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Email))
+    {
+        <dt class="col-sm-3">E-mail</dt><dd class="col-sm-9">@Model.Email</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Cep))
+    {
+        <dt class="col-sm-3">CEP</dt><dd class="col-sm-9">@Model.Cep</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Logradouro))
+    {
+        <dt class="col-sm-3">Logradouro</dt><dd class="col-sm-9">@Model.Logradouro</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Numero))
+    {
+        <dt class="col-sm-3">Número</dt><dd class="col-sm-9">@Model.Numero</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Complemento))
+    {
+        <dt class="col-sm-3">Complemento</dt><dd class="col-sm-9">@Model.Complemento</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Bairro))
+    {
+        <dt class="col-sm-3">Bairro</dt><dd class="col-sm-9">@Model.Bairro</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Cidade))
+    {
+        <dt class="col-sm-3">Cidade</dt><dd class="col-sm-9">@Model.Cidade</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Uf))
+    {
+        <dt class="col-sm-3">UF</dt><dd class="col-sm-9">@Model.Uf</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Observacoes))
+    {
+        <dt class="col-sm-3">Observações</dt><dd class="col-sm-9" style="white-space: pre-wrap">@Model.Observacoes</dd>
+    }
+</dl>

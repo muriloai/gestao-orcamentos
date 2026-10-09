@@ -4,7 +4,7 @@ Aplicação web local em ASP.NET Core MVC e Razor Pages utilizando Bootstrap.
 
 Permite cadastrar, pesquisar, consultar, editar e excluir clientes.
 A página de configurações guarda os dados do negócio.
-Também permite criar, pesquisar, consultar, editar e excluir orçamentos em rascunho com itens, quantidade, unidade e preço.
+Também permite criar e pesquisar orçamentos com itens, quantidade, unidade e preço, além de acompanhar aprovação e recusa.
 
 ## Arquitetura
 
@@ -20,18 +20,24 @@ Views Razor ↔ ClientesController → ClienteService → GestaoOrcamentosDbCont
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | MVC e Razor              | O controller recebe as requisições, já as views apresentam listagem, detalhes, formulários e erros.                                                      |
 | Razor Pages              | A página `/Configuracoes` apresenta e salva os dados do negócio.                                                                                         |
-| Orçamentos MVC           | Listagem, pesquisa, criação, consulta, edição e exclusão de rascunhos; `OrcamentoService` valida os itens e grava cabeçalho e linhas numa operação.      |
+| Orçamentos MVC           | Listagem, pesquisa, criação e consulta; `OrcamentoService` valida itens, altera rascunhos e controla as transições de situação.                          |
 | Cálculo de valores       | Cada subtotal é arredondado para centavos antes da soma do total, usando `decimal` e `AwayFromZero`. O número exibido usa o ID do banco com seis dígitos. |
 | `ClienteFormulario`      | Modelo usado no cadastro e na edição, com validações por Data Annotations, e o serviço também as verifica antes de gravar.                               |
 | `ClienteService`         | Pesquisa, consulta, normaliza dados e coordena cadastro, edição e exclusão. É registrado como serviço _scoped_ por injeção de dependência.               |
-| Entity Framework Core    | O `DbContext` mapeia clientes, configurações, orçamentos e itens; migrations versionam as tabelas. A configuração possui um único registro, com ID fixo em 1. |
+| Entity Framework Core    | O `DbContext` mapeia clientes, configurações, orçamentos e itens; migrations versionam as tabelas. A configuração possui um único registro, com ID fixo em 1. Cópias cadastrais ficam no orçamento. |
 | Padrão Post/Redirect/Get | Após cadastro ou edição, o POST redireciona aos detalhes. Após exclusão, redireciona à listagem de clientes ou ao cliente vinculado. A confirmação usa `TempData`. |
 
 Os POSTs usam token antifalsificação. A exclusão exige uma página de confirmação, e a requisição GET nunca remove dados. As consultas usam `AsNoTracking`, e as operações de banco são assíncronas e recebem o token de cancelamento da requisição. A interface usa cultura `pt-BR`, Bootstrap local e textos em português. Os testes xUnit verificam validações, consultas e persistência em um banco LocalDB temporário.
 
 Para criar um orçamento, cadastre um cliente e use **Novo orçamento** no menu ou na página do cliente. A exclusão de clientes com orçamentos é bloqueada pela aplicação e pelo banco.
-Na página do orçamento, **Editar** permite alterar os dados e adicionar ou remover itens; **Excluir** exige confirmação. Uma edição inválida não grava parte das alterações.
+Na página de um rascunho, **Editar** permite alterar os dados e adicionar ou remover itens; **Excluir** exige confirmação. Uma edição inválida não grava parte das alterações.
 A lista **Orçamentos** permite pesquisar pelo nome do cliente ou pelo título. A página de cada cliente mostra seus orçamentos vinculados.
+
+Um orçamento começa como **rascunho**, quando pode ser editado ou excluído. Ao marcá-lo como **pendente de aprovação**, a aplicação exige as configurações do negócio e registra cópias dos dados do cliente e do negócio. Enquanto estiver pendente, é possível **aprovar**, **recusar** ou **devolver ao rascunho**. Aprovados e recusados ficam disponíveis para consulta, sem edição ou exclusão. A aprovação e a recusa são registradas pelo operador da aplicação.
+
+As consultas de orçamentos fora de rascunho mostram os dados registrados no envio, mesmo que os cadastros sejam alterados depois. Devolver ao rascunho descarta essas cópias; um novo envio registra os dados atualizados. A lista permite filtrar pela situação.
+
+Qualquer orçamento pode ser duplicado como novo rascunho. A cópia recebe outro número e a data atual de São Paulo, mantém cliente, título, observações e itens, e deixa a validade em branco. Seus itens são independentes do original; os dados históricos registrados não são copiados.
 
 ## Requisitos
 
