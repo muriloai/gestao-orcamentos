@@ -1,0 +1,78 @@
+body {
+  color: #212529;
+}
+
+.dados-parte dd,
+.observacoes p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.table {
+  table-layout: fixed;
+}
+
+.col-descricao {
+  width: 37%;
+}
+
+.col-quantidade {
+  width: 15%;
+}
+
+.col-unidade {
+  width: 12%;
+}
+
+.col-valor {
+  width: 18%;
+}
+
+.table td:not(.valor),
+.table th:not(.valor) {
+  overflow-wrap: anywhere;
+}
+
+.valor {
+  white-space: nowrap;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  .acoes-impressao {
+    display: none !important;
+  }
+
+  main.container {
+    max-width: none;
+    padding: 0 !important;
+  }
+
+  .dados-parte,
+  .observacoes,
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-row-group;
+  }
+
+  .table {
+    width: 100%;
+    font-size: 0.8rem;
+  }
+
+  .table > :not(caption) > * > * {
+    padding: 0.35rem;
+  }
+}

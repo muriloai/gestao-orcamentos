@@ -71,6 +71,13 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
         return orcamento is null ? NotFound() : View(orcamento);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Imprimir(int id, CancellationToken cancellationToken)
+    {
+        var impressao = await orcamentoService.ObterParaImpressaoAsync(id, cancellationToken);
+        return impressao is null ? NotFound() : View(impressao);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Duplicar(int id, CancellationToken cancellationToken)

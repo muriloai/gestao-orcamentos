@@ -33,6 +33,7 @@
     <form asp-action="Duplicar" asp-route-id="@Model.Id" method="post">
         <button type="submit" class="btn btn-outline-primary">Duplicar como rascunho</button>
     </form>
+    <a asp-action="Imprimir" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Imprimir ou salvar em PDF</a>
 </div>
 
 @if (TempData["Mensagem"] is string mensagem)

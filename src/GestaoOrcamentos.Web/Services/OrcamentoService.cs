@@ -51,6 +51,25 @@ public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
             .Include(orcamento => orcamento.Itens)
             .SingleOrDefaultAsync(orcamento => orcamento.Id == id, cancellationToken);
 
+    public async Task<OrcamentoImpressao?> ObterParaImpressaoAsync(int id, CancellationToken cancellationToken)
+    {
+        var orcamento = await ObterAsync(id, cancellationToken);
+        if (orcamento is null)
+        {
+            return null;
+        }
+
+        if (orcamento.Situacao != SituacaoOrcamento.Rascunho)
+        {
+            return new OrcamentoImpressao(orcamento, orcamento.ClienteRegistrado!, orcamento.NegocioRegistrado!);
+        }
+
+        var negocio = await dbContext.ConfiguracoesNegocio.AsNoTracking()
+            .SingleOrDefaultAsync(configuracao => configuracao.Id == 1, cancellationToken);
+        return new OrcamentoImpressao(orcamento, DadosParteOrcamento.DoCliente(orcamento.Cliente),
+            negocio is null ? null : DadosParteOrcamento.DoNegocio(negocio));
+    }
+
     public async Task<int> CadastrarAsync(OrcamentoFormulario formulario, CancellationToken cancellationToken)
     {
         var itens = Validar(formulario);

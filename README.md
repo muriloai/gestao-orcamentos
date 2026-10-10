@@ -39,6 +39,8 @@ As consultas de orçamentos fora de rascunho mostram os dados registrados no env
 
 Qualquer orçamento pode ser duplicado como novo rascunho. A cópia recebe outro número e a data atual de São Paulo, mantém cliente, título, observações e itens, e deixa a validade em branco. Seus itens são independentes do original; os dados históricos registrados não são copiados.
 
+Na página de detalhes, **Imprimir ou salvar em PDF** abre uma versão própria para impressão. Use o botão da página e escolha a impressora ou **Salvar como PDF** no navegador. Rascunhos usam os cadastros atuais; os demais orçamentos usam os dados registrados quando foram marcados como pendentes.
+
 ## Requisitos
 
 - SDK do .NET 10.
