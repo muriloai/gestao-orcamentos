@@ -12,17 +12,38 @@ public class ClienteService(GestaoOrcamentosDbContext dbContext)
 {
     public async Task<List<Cliente>> ListarAsync(string? busca, CancellationToken cancellationToken)
     {
-        var consulta = dbContext.Clientes.AsNoTracking().AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(busca))
-        {
-            var termo = busca.Trim();
-            consulta = consulta.Where(cliente => cliente.Nome.Contains(termo));
-        }
-
-        return await consulta.OrderBy(cliente => cliente.Nome)
+        return await Consultar(busca).OrderBy(cliente => cliente.Nome)
             .ThenBy(cliente => cliente.Id)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<(List<Cliente> Itens, int TotalItens)> ListarPaginadoAsync(
+        string? nome, int pagina, int tamanhoPagina, CancellationToken cancellationToken)
+    {
+        if (pagina < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pagina));
+        }
+
+        if (tamanhoPagina is < 1 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(tamanhoPagina));
+        }
+
+        var consulta = Consultar(nome);
+        var totalItens = await consulta.CountAsync(cancellationToken);
+        var deslocamento = ((long)pagina - 1) * tamanhoPagina;
+        if (deslocamento > int.MaxValue)
+        {
+            return ([], totalItens);
+        }
+
+        var itens = await consulta.OrderBy(cliente => cliente.Nome)
+            .ThenBy(cliente => cliente.Id)
+            .Skip((int)deslocamento)
+            .Take(tamanhoPagina)
+            .ToListAsync(cancellationToken);
+        return (itens, totalItens);
     }
 
     public Task<Cliente?> ObterAsync(int id, CancellationToken cancellationToken) =>
@@ -87,6 +108,18 @@ public class ClienteService(GestaoOrcamentosDbContext dbContext)
 
     private static void Validar(ClienteFormulario formulario) =>
         Validator.ValidateObject(formulario, new ValidationContext(formulario), validateAllProperties: true);
+
+    private IQueryable<Cliente> Consultar(string? nome)
+    {
+        var consulta = dbContext.Clientes.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(nome))
+        {
+            var termo = nome.Trim();
+            consulta = consulta.Where(cliente => cliente.Nome.Contains(termo));
+        }
+
+        return consulta;
+    }
 
     private static void AplicarDados(Cliente cliente, ClienteFormulario formulario)
     {

@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddOpenApi();
 builder.Services.AddDbContext<GestaoOrcamentosDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("GestaoOrcamentos")));
 builder.Services.AddScoped<ClienteService>();
@@ -21,6 +22,10 @@ var cultura = CultureInfo.GetCultureInfo("pt-BR");
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+}
+else
+{
+    app.MapOpenApi();
 }
 
 app.UseRequestLocalization(new RequestLocalizationOptions

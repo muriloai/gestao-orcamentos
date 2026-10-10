@@ -24,6 +24,7 @@ Views Razor ↔ ClientesController → ClienteService → GestaoOrcamentosDbCont
 | Cálculo de valores       | Cada subtotal é arredondado para centavos antes da soma do total, usando `decimal` e `AwayFromZero`. O número exibido usa o ID do banco com seis dígitos. |
 | `ClienteFormulario`      | Modelo usado no cadastro e na edição, com validações por Data Annotations, e o serviço também as verifica antes de gravar.                               |
 | `ClienteService`         | Pesquisa, consulta, normaliza dados e coordena cadastro, edição e exclusão. É registrado como serviço _scoped_ por injeção de dependência.               |
+| API de clientes          | Endpoints JSON de consulta usam o mesmo serviço da interface MVC. DTOs definem a resposta pública, e a listagem tem paginação com ordenação por nome e ID. |
 | Entity Framework Core    | O `DbContext` mapeia clientes, configurações, orçamentos e itens; migrations versionam as tabelas. A configuração possui um único registro, com ID fixo em 1. Cópias cadastrais ficam no orçamento. |
 | Padrão Post/Redirect/Get | Após cadastro ou edição, o POST redireciona aos detalhes. Após exclusão, redireciona à listagem de clientes ou ao cliente vinculado. A confirmação usa `TempData`. |
 
@@ -40,6 +41,13 @@ As consultas de orçamentos fora de rascunho mostram os dados registrados no env
 Qualquer orçamento pode ser duplicado como novo rascunho. A cópia recebe outro número e a data atual de São Paulo, mantém cliente, título, observações e itens, e deixa a validade em branco. Seus itens são independentes do original; os dados históricos registrados não são copiados.
 
 Na página de detalhes, **Imprimir ou salvar em PDF** abre uma versão própria para impressão. Use o botão da página e escolha a impressora ou **Salvar como PDF** no navegador. Rascunhos usam os cadastros atuais; os demais orçamentos usam os dados registrados quando foram marcados como pendentes.
+
+## API de consulta de clientes
+
+- `GET /api/clientes?nome=&pagina=1&tamanhoPagina=20`: pesquisa opcional por nome. A resposta contém `itens`, `pagina`, `tamanhoPagina`, `totalItens` e `totalPaginas`. O tamanho da página deve ser de 1 a 100.
+- `GET /api/clientes/{id}`: retorna os dados de um cliente ou `404` se não existir.
+
+Parâmetros de paginação inválidos retornam `400` com erros por campo. Uma página sem clientes retorna `itens` vazio. Há exemplos executáveis em [clientes.http](clientes.http). Em ambiente de desenvolvimento, o documento OpenAPI fica em `/openapi/v1.json`.
 
 ## Requisitos
 
