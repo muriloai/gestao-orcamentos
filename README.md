@@ -1,3 +1,20 @@
+## Sumário
+
+- [Gestão de orçamentos](#gesto-de-oramentos)
+  - [O que a aplicação faz?](#o-que-a-aplicao-faz)
+  - [Arquitetura e escolhas técnicas](#arquitetura-e-escolhas-tcnicas)
+    - [Padrões e modelos](#padres-e-modelos)
+    - [Persistência e processamento](#persistncia-e-processamento)
+  - [Fluxo dos orçamentos](#fluxo-dos-oramentos)
+  - [API de consulta](#api-de-consulta)
+  - [Medição da consulta de vencimentos](#medio-da-consulta-de-vencimentos)
+  - [Imagens da aplicação](#imagens-da-aplicao)
+  - [Requisitos e desenvolvimento](#requisitos-e-desenvolvimento)
+  - [Publicar no Windows x64](#publicar-no-windows-x64)
+  - [Testes](#testes)
+
+---
+
 # Gestão de orçamentos
 
 Esta aplicação vem para organizar clientes e acompanhar orçamentos, desde a criação até a aprovação ou recusa.
