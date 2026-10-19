@@ -12,28 +12,79 @@ Também permite criar e pesquisar orçamentos com itens, quantidade, unidade e p
 
 ## Arquitetura
 
-É um projeto web .NET 10 contando com testes.
+É um único aplicativo web ASP.NET Core em .NET 10.
 
-O sistema é um único aplicativo ASP.NET Core, contendo as seguintes características:
+As pastas representam responsabilidades que colaboram no tratamento de cada operação:
 
-- Controllers MVC;
-- APIs que recebem as requisições;
-- Serviços scoped que concentram operações do domínio;
-- Razor apresenta a interface;
-- `DbContext` que acessa o SQL Server.
+- `Controllers` recebem as requisições HTTP e coordenam a resposta da interface MVC ou da API;
+- `Pages` e `Views` compõem a interface com Razor: `Pages` atende páginas Razor Pages, enquanto `Views` renderiza as respostas dos controllers MVC;
+- `Services` concentram fluxos da aplicação, como validação e persistência de clientes e orçamentos, relatórios, alertas e integração com o ViaCEP;
+- `Models` reúnem tipos de dados usados entre essas partes, aqui há entidades persistidas, modelos de formulário e de tela, além dos DTOs da API em `Models/Api`;
+- `Data` contém o `DbContext`, o mapeamento do Entity Framework Core e as migrations que versionam o esquema do SQL Server;
+- `wwwroot` contém os arquivos estáticos da interface, como CSS e JavaScript.
 
-Outas características de operação:
+#### Fluxo típico
 
-- A composição usa injeção de dependência, DTOs para os contratos HTTP e Post/Redirect/Get nos formulários;
-- A leitura da lista usa um modelo sem chave alimentado pela view SQL;
+Começa no controller ou em uma Razor Page, passa pelo serviço responsável e chega ao banco por meio do `GestaoOrcamentosDbContext`, sendo assim, a resposta segue de volta para uma View Razor (HTML) ou, nos endpoints da API, como JSON.
+
+```mermaid
+flowchart LR
+    A["Requisição HTTP"] --> B["Controller / Razor Page"]
+    B --> C["Service"]
+    C --> D["DbContext"]
+    D --> E["SQL Server"]
+
+    B --> F["View Razor"]
+    F --> G["HTML (interface MVC)"]
+
+    B --> H["DTO"]
+    H --> I["JSON (API)"]
+```
+
+[Navegue por este diagrama](https://dataxstudios.com.br/br/apps/markdown-studio/#c=VY09DoJAEEZ7TzGZCgrjDUz4URcDgkBsJhRIBt2EsHFFMV7HwoNwMeOKibbvzfumblRfHUvdQZhOAAAcwpRPF3mWw3N4KBB5nmAB0-kcXEJPtZ1WTcMaZpCWd6UhKQ-MhWldc-YRZqyvsvpiz2Cf0N-_e751o_CNWBBm2xDeDWssJj9TS8Kd5P7zaYyWxqwIRR6FYMm2Y12XFUO08-z_XBD6eTx2wqCAcJ3FG7CcJLCxeAE&theme=default)
+
+#### Detalhando mais sobre Entidades, modelos de formulário e DTOs
+
+- Entidades como `Cliente` e `Orcamento` representam dados persistidos e são mapeadas pelo Entity Framework Core;
+- Modelos como `ClienteFormulario` recebem e validam os dados enviados pelos formulários;
+- Modelos de tela combinam dados para uma página, então eles moldam a interação da interface e não são, por conta disso, as entidades do banco.
+- `DTO` é um formato de dados definido para atravessar uma fronteira, neste caso principalmente a resposta JSON da API, por exemplo, `ClienteDto` transforma um `Cliente` em uma resposta pública com os campos escolhidos, e `ClientesPaginaDto` acrescenta os metadados de paginação, com isso separa-se o contrato HTTP do formato interno da entidade, portanto as mudanças na persistência não precisam alterar automaticamente o JSON
+- O cadastro da API atualmente reutiliza `ClienteFormulario` como modelo de entrada.
+
+#### Estilo arquitetural e padrões usados
+
+- **Monólito em camadas**: sem projetos separados para esta aplicação e sendo publicada como um único app ASP.NET Core, organizado entre:
+  - Apresentação: Controllers, Pages e Views;
+  - Serviços;
+  - Acesso a dados: `Data`.
+
+- **MVC**: controllers e views Razor separam o tratamento de requisições da renderização HTML, e o projeto também usa Razor Pages para configurações e controllers de API para respostas JSON.
+
+- **Injeção de dependência**: o contêiner do ASP.NET Core compõe os serviços e define seus ciclos de vida, com isso os serviços da aplicação recebem diretamente dependências concretas, como `GestaoOrcamentosDbContext`.
+
+- **Unit of Work e acesso a dados do Entity Framework Core**: o `DbContext` acompanha alterações e as persiste com `SaveChangesAsync` e seus `DbSet` dão acesso às entidades, com isso, o projeto não implementa uma camada própria de repositórios.
+
+- **DTO e Post/Redirect/Get**: DTOs definem formatos de transferência da API, e os formulários MVC redirecionam após operações de escrita.
+
+Esta organização toda é uma arquitetura em camadas dentro de um monólito. A solução nesta fase atual se apoia principalmente nos recursos e padrões do ASP.NET Core e do Entity Framework Core.
+
+Outros detalhes de operação:
+
+- A leitura da lista de orçamentos usa um modelo sem chave alimentado pela view SQL;
 - O relatório chama a procedure por ADO.NET;
 - Os alertas usam um `BackgroundService` com escopo de DI por ciclo.
 
 ### As operações de clientes seguem este fluxo
 
-```text
-Views Razor ↔ ClientesController → ClienteService → GestaoOrcamentosDbContext → SQL Server LocalDB
+```mermaid
+flowchart LR
+    V["Views Razor"] <--> C["ClientesController"]
+    C --> S["ClienteService"]
+    S --> DB["GestaoOrcamentosDbContext"]
+    DB --> SQL[("SQL Server LocalDB")]
 ```
+
+[Navegue por este diagrama](https://dataxstudios.com.br/br/apps/markdown-studio/#c=PYy9CsIwEIB3n-K4SYe-gTgkAZeAtIEuIUMMJxZiDy6hFZ9eUovz9_PIvKZnlAp2OAAAjB7HidYCQ_ywYIBz111Ae9R5orlS0TxX4ZxJMGyFhma4v-FIlinRTt1GjfJ4pVIj3yTFF82Vi7m3Fb3rbhr1G_XWH9H1FtqIBCynmI3CU_gC&theme=default)
 
 | Parte                        | Responsabilidade                                                                                                                                                                                          |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
