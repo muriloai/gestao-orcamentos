@@ -1,171 +1,120 @@
 # Gestão de orçamentos
 
-Aplicação web local, sem autenticação, em ASP.NET Core MVC e Razor Pages utilizando Bootstrap.
+Esta aplicação vem para organizar clientes e acompanhar orçamentos, desde a criação até a aprovação ou recusa.
 
-**Atenção**
-Esta aplicação não é preparada para publicação em rede, sendo assim, o servidor HTTP escuta somente em interfaces de loopback.
+O fluxo também guarda os dados do cliente e do negócio que foram apresentados quando a proposta foi enviada, para que depois as alterações nos cadastros não mudem o histórico.
 
-**O que faz?**
-Permite cadastrar, pesquisar, consultar, editar e excluir clientes.
-A página de configurações gerencia os dados do negócio.
-Também permite criar e pesquisar orçamentos com itens, quantidade, unidade e preço, além de acompanhar aprovação e recusa.
+A proposta do projeto é resolver esse fluxo de trabalho e demonstrar, em uma aplicação funcional, como estes recursos do ASP.NET Core e do SQL Server podem trabalhar juntos:
 
-## Arquitetura
+- MVC e Razor Pages;
+- API HTTP;
+- Persistência com Entity Framework Core;
+- Consultas SQL
+- Tarefas em segundo plano
+- Integração com um serviço externo.
 
-É um único aplicativo web ASP.NET Core em .NET 10.
+O aplicativo foi pensado para uso pessoal no próprio computador, sem login, além disso, o servidor escuta em interfaces de loopback e a aplicação usa `pt-BR`.
 
-As pastas representam responsabilidades que colaboram no tratamento de cada operação:
+## O que a aplicação faz?
 
-- `Controllers` recebem as requisições HTTP e coordenam a resposta da interface MVC ou da API;
-- `Pages` e `Views` compõem a interface com Razor: `Pages` atende páginas Razor Pages, enquanto `Views` renderiza as respostas dos controllers MVC;
-- `Services` concentram fluxos da aplicação, como validação e persistência de clientes e orçamentos, relatórios, alertas e integração com o ViaCEP;
-- `Models` reúnem tipos de dados usados entre essas partes, aqui há entidades persistidas, modelos de formulário e de tela, além dos DTOs da API em `Models/Api`;
-- `Data` contém o `DbContext`, o mapeamento do Entity Framework Core e as migrations que versionam o esquema do SQL Server;
-- `wwwroot` contém os arquivos estáticos da interface, como CSS e JavaScript.
+- Cadastra, pesquisa, consulta e edita clientes; impede sua exclusão quando há orçamentos vinculados;
+- Mantém os dados do negócio usados nas propostas;
+- Cria orçamentos com itens, quantidades, unidades e preços, calcula totais e acompanha as mudanças de situação;
+- Apresenta relatórios por período, registra avisos de validade e prepara orçamentos para impressão ou PDF;
+- Oferece endpoints HTTP para consulta de clientes e consulta de endereços pelo ViaCEP.
 
-#### Fluxo típico
+## Arquitetura e escolhas técnicas
 
-Começa no controller ou em uma Razor Page, passa pelo serviço responsável e chega ao banco por meio do `GestaoOrcamentosDbContext`, sendo assim, a resposta segue de volta para uma View Razor (HTML) ou, nos endpoints da API, como JSON.
+É um único aplicativo ASP.NET Core em .NET 10, organizado em camadas dentro do mesmo projeto. A apresentação recebe requisições e monta respostas; serviços coordenam os fluxos da aplicação; o acesso a dados usa Entity Framework Core e SQL Server LocalDB no ambiente de desenvolvimento.
 
-```mermaid
-flowchart LR
-    A["Requisição HTTP"] --> B["Controller / Razor Page"]
-    B --> C["Service"]
-    C --> D["DbContext"]
-    D --> E["SQL Server"]
+As pastas agrupam responsabilidades que colaboram nesses fluxos:
 
-    B --> F["View Razor"]
-    F --> G["HTML (interface MVC)"]
+- `Controllers` tratam requisições MVC e da API;
+- `Pages` contém a página Razor Pages de configurações, e `Views` contém as telas Razor dos controllers MVC;
+- `Services` implementa operações de clientes, orçamentos, relatórios, alertas e a integração com o ViaCEP;
+- `Models` reúne entidades persistidas, modelos de formulário e de tela, e DTOs da API em `Models/Api`;
+- `Data` contém o `GestaoOrcamentosDbContext` e as migrations do Entity Framework Core;
+- `wwwroot` contém CSS, JavaScript e outros arquivos estáticos da interface.
 
-    B --> H["DTO"]
-    H --> I["JSON (API)"]
-```
-
-[Navegue por este diagrama](https://dataxstudios.com.br/br/apps/markdown-studio/#c=VY09DoJAEEZ7TzGZCgrjDUz4URcDgkBsJhRIBt2EsHFFMV7HwoNwMeOKibbvzfumblRfHUvdQZhOAAAcwpRPF3mWw3N4KBB5nmAB0-kcXEJPtZ1WTcMaZpCWd6UhKQ-MhWldc-YRZqyvsvpiz2Cf0N-_e751o_CNWBBm2xDeDWssJj9TS8Kd5P7zaYyWxqwIRR6FYMm2Y12XFUO08-z_XBD6eTx2wqCAcJ3FG7CcJLCxeAE&theme=default)
-
-#### Detalhando mais sobre Entidades, modelos de formulário e DTOs
-
-- Entidades como `Cliente` e `Orcamento` representam dados persistidos e são mapeadas pelo Entity Framework Core;
-- Modelos como `ClienteFormulario` recebem e validam os dados enviados pelos formulários;
-- Modelos de tela combinam dados para uma página, então eles moldam a interação da interface e não são, por conta disso, as entidades do banco.
-- `DTO` é um formato de dados definido para atravessar uma fronteira, neste caso principalmente a resposta JSON da API, por exemplo, `ClienteDto` transforma um `Cliente` em uma resposta pública com os campos escolhidos, e `ClientesPaginaDto` acrescenta os metadados de paginação, com isso separa-se o contrato HTTP do formato interno da entidade, portanto as mudanças na persistência não precisam alterar automaticamente o JSON
-- O cadastro da API atualmente reutiliza `ClienteFormulario` como modelo de entrada.
-
-#### Estilo arquitetural e padrões usados
-
-- **Monólito em camadas**: sem projetos separados para esta aplicação e sendo publicada como um único app ASP.NET Core, organizado entre:
-  - Apresentação: Controllers, Pages e Views;
-  - Serviços;
-  - Acesso a dados: `Data`.
-
-- **MVC**: controllers e views Razor separam o tratamento de requisições da renderização HTML, e o projeto também usa Razor Pages para configurações e controllers de API para respostas JSON.
-
-- **Injeção de dependência**: o contêiner do ASP.NET Core compõe os serviços e define seus ciclos de vida, com isso os serviços da aplicação recebem diretamente dependências concretas, como `GestaoOrcamentosDbContext`.
-
-- **Unit of Work e acesso a dados do Entity Framework Core**: o `DbContext` acompanha alterações e as persiste com `SaveChangesAsync` e seus `DbSet` dão acesso às entidades, com isso, o projeto não implementa uma camada própria de repositórios.
-
-- **DTO e Post/Redirect/Get**: DTOs definem formatos de transferência da API, e os formulários MVC redirecionam após operações de escrita.
-
-Esta organização toda é uma arquitetura em camadas dentro de um monólito. A solução nesta fase atual se apoia principalmente nos recursos e padrões do ASP.NET Core e do Entity Framework Core.
-
-Outros detalhes de operação:
-
-- A leitura da lista de orçamentos usa um modelo sem chave alimentado pela view SQL;
-- O relatório chama a procedure por ADO.NET;
-- Os alertas usam um `BackgroundService` com escopo de DI por ciclo.
-
-### As operações de clientes seguem este fluxo
+O fluxo mais comum parte de um controller, passa por um serviço e chega ao banco pelo `DbContext`. A página de configurações usa o `DbContext` diretamente. As respostas MVC são renderizadas pelas Views, e as respostas da API são serializadas como JSON.
 
 ```mermaid
 flowchart LR
-    V["Views Razor"] <--> C["ClientesController"]
-    C --> S["ClienteService"]
-    S --> DB["GestaoOrcamentosDbContext"]
-    DB --> SQL[("SQL Server LocalDB")]
+    A["Requisição HTTP"] --> B["Controllers MVC e API"]
+    A --> P["Razor Page de configurações"]
+    B --> C["Services"]
+    C --> D["GestaoOrcamentosDbContext"]
+    P --> D
+    D --> E[("SQL Server")]
+    B --> F["Views Razor"]
+    F --> G["HTML"]
+    B --> H["DTOs da API"]
+    H --> I["JSON"]
+    B --> J["ViaCepClient"]
+    J --> K["ViaCEP"]
+    L["AlertaOrcamentoWorker"] --> C
 ```
 
-[Navegue por este diagrama](https://dataxstudios.com.br/br/apps/markdown-studio/#c=PYy9CsIwEIB3n-K4SYe-gTgkAZeAtIEuIUMMJxZiDy6hFZ9eUovz9_PIvKZnlAp2OAAAjB7HidYCQ_ywYIBz111Ae9R5orlS0TxX4ZxJMGyFhma4v-FIlinRTt1GjfJ4pVIj3yTFF82Vi7m3Fb3rbhr1G_XWH9H1FtqIBCynmI3CU_gC&theme=default)
+[Navegue por este diagrama](https://dataxstudios.com.br/br/apps/markdown-studio/#c=VZBBbsIwEEX3PcVoVu2CK1QKDhDS0LhJRBcjFm4YqNU0bm1Tql6nC07QE-RiVUxAsBv9__znjzeN2devynrIihsAgIiw4M-ddro7dL8GkqqSuILR6B7GhMK03pqmYetgsRTAEMk5ro4vAyQJC_VjLEi1ZVgz1Kbd6O3Oqu7Q_bEb4HGABWHJ9kvXZ10EPSacsfPK5LZW79x64-KXfjd_-wGURzDMcZgndIvlUwZ9Ilu8u1w0JVxq3jsI3YaIabBmhEm1yK56JYRxlTtYq4v7kmDNCdMyf7zC0z5dCf4Qjeb21DAN3sPRm8hBzQijhq1X59OejX1jO_yx-Ac)
 
-| Parte                        | Responsabilidade                                                                                                                                                                                          |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **MVC e Razor**              | O controller recebe as requisições, já as views apresentam listagem, detalhes, formulários e erros.                                                                                                       |
-| **Razor Pages**              | A página `/Configuracoes` apresenta e salva os dados do negócio.                                                                                                                                          |
-| **Orçamentos MVC**           | Listagem, pesquisa, criação e consulta; `OrcamentoService` valida itens, altera rascunhos e controla as transições de situação.                                                                           |
-| **Cálculo de valores**       | Cada subtotal é arredondado para centavos antes da soma do total, usando `decimal` e `AwayFromZero`. O número exibido usa o ID do banco com seis dígitos.                                                 |
-| `ClienteFormulario`          | Modelo usado no cadastro e na edição, com validações por Data Annotations, e o serviço também as verifica antes de gravar.                                                                                |
-| `ClienteService`             | Pesquisa, consulta, normaliza dados e coordena cadastro, edição e exclusão. É registrado como serviço _scoped_ por injeção de dependência.                                                                |
-| **API de clientes**          | Endpoints JSON de consulta usam o mesmo serviço da interface MVC; o cadastro compartilha as validações do formulário. DTOs definem a resposta e a listagem tem paginação.                                 |
-| **Resumo de orçamentos**     | A view SQL `vw_ResumoOrcamentos` calcula totais arredondando cada item para centavos e fornece os dados da listagem sem carregar os itens no processo web.                                                |
-| **Relatório por período**    | `sp_RelatorioOrcamentosPorPeriodo` agrega quantidade e valor por situação, incluindo as datas inicial e final. Situação aprovada é apresentada como proposta aprovada.                                    |
-| **Alertas de validade**      | `fn_OrcamentosVencidos` seleciona somente orçamentos pendentes com validade anterior à data de referência. Um `BackgroundService` usa escopo novo por execução e grava no máximo um alerta por orçamento. |
-| **Índice de vencimentos**    | `IX_Orcamentos_Pendente_Validade` é filtrado para pendentes com validade definida e cobre a busca de IDs da função de vencimentos.                                                                        |
-| **Entity Framework Core**    | O `DbContext` mapeia clientes, configurações, orçamentos e itens; migrations versionam as tabelas. A configuração possui um único registro, com ID fixo em 1. Cópias cadastrais ficam no orçamento.       |
-| **Padrão Post/Redirect/Get** | Após cadastro ou edição, o POST redireciona aos detalhes. Após exclusão, redireciona à listagem de clientes ou ao cliente vinculado. A confirmação usa `TempData`.                                        |
+### Padrões e modelos
 
-#### Outros detalhes
+- **MVC e Razor Pages:** controllers tratam requisições e as Views renderizam HTML, já Razor Pages atendem configurações, e os controllers de API retornam JSON.
+- **Injeção de dependência:** o contêiner do ASP.NET Core compõe os serviços e define seus ciclos de vida. Os serviços recebem dependências concretas, como `GestaoOrcamentosDbContext`.
+- **Unit of Work do Entity Framework Core:** o `DbContext` acompanha alterações e as persiste com `SaveChangesAsync`, e os `DbSet`s dão acesso às entidades.
+- **Post/Redirect/Get:** depois de operações de escrita nos formulários MVC, a aplicação redireciona para outra página.
+- **Separação de responsabilidades:** controllers cuidam do protocolo HTTP, enquanto serviços concentram fluxos da aplicação. Essa divisão segue o princípio de responsabilidade única no nível dos componentes.
+- **Validação e segurança dos formulários:** Data Annotations validam os dados, os serviços repetem a validação antes de gravar e os POSTs MVC usam token antifalsificação.
+- **Consultas:** as leituras usam `AsNoTracking`, e operações de banco são assíncronas e recebem o token de cancelamento da requisição.
 
-- Os `POSTs` usam token antifalsificação;
-- A exclusão exige uma página de confirmação;
-- As consultas usam `AsNoTracking`;
-- Operações de banco são assíncronas e recebem o token de cancelamento da requisição;
-- A interface é toda em `pt-BR`;
-- Bootstrap local e textos em português.
-- Os testes xUnit verificam validações, consultas, persistência, cálculos SQL e avisos em bancos LocalDB temporários.
+Os tipos da pasta `Models` têm funções diferentes. Entidades como `Cliente` e `Orcamento` representam dados persistidos e são mapeadas pelo Entity Framework Core. `ClienteFormulario` e `OrcamentoFormulario` recebem e validam dados de entrada, e modelos de tela combinam informações para uma página.
 
-#### Detalhes de alguns fluxos
+DTO (_Data Transfer Object_) define o formato de dados que atravessa uma fronteira da aplicação. `ClienteDto`, por exemplo, seleciona os campos expostos pela API, enquanto `ClientesPaginaDto` inclui os dados de paginação. Esses DTOs ficam em `Models/Api`, e o cadastro da API reutiliza `ClienteFormulario` como modelo de entrada.
 
-- **Criar um orçamento**: cadastre um cliente e use `Novo orçamento` no menu ou na página do cliente;
-- **Exclusão de clientes**: se ele possuir orçamentos, então será bloqueada pela aplicação e pelo banco;
-- **Editar da página de rascunho**: permite alterar os dados e adicionar ou remover itens;
-- **Excluir**: exige confirmação;
-- **Lista de orçamentos**: permite pesquisar pelo nome do cliente ou pelo título;
-- A página de cada cliente mostra seus orçamentos vinculados;
-- **Menu de relatórios**: consulta orçamentos pela data de emissão e apresenta quantidade e valor por situação, inclusive categorias sem registros no período;
-- **Menu de orçamentos vencidos**: listagem de avisos registrados para propostas que continuam pendentes e cuja validade já passou;
-- **Verificação** roda na inicialização e a cada minuto, não altera a situação do orçamento e continua independente da listagem principal.
-- **Orçamento** começa como `rascunho`, quando pode ser editado ou excluído;
-- Ao marcar orçamento como **pendente de aprovação**, a aplicação exige as configurações do negócio e registra cópias dos dados do cliente e do negócio;
-- **Orçamento pendente**: enquanto ele estiver pendente, é possível `aprovar`, `recusar` ou `devolver ao rascunho`;
-- **Orçamentos aprovados e recusados**: ficam disponíveis para consulta, sem edição ou exclusão;
-- **Aprovação de orçamento e recusa**: são registradas pelo operador da aplicação.
-- **Consultas de orçamentos**: as que estão fora de rascunho mostram os dados registrados no envio, mesmo que os cadastros sejam alterados depois;
-- **Orçametno devolvido ao rascunho**: descarta as cópias;
-- **Orçamento enviado**: quando ocorre um novo envio, registra-se os dados atualizados;
-- Qualquer orçamento pode ser duplicado como novo rascunho;
-- **Quando há uma cópia de orçamento**: ela recebe outro número e a data atual, mantém cliente, título, observações e itens, e deixa a validade em branco, e seus itens são independentes do original, e os dados históricos registrados não são copiados;
-- **Detalhes do orçamento**: `Imprimir ou salvar em PDF` abre uma versão pronta para impressão;
-- **Orçamentos rascunhos**: usam os cadastros atuais, já os demais orçamentos usam os dados registrados quando foram marcados como pendentes.
+### Persistência e processamento
 
-## Medição da performance na parte de vencimentos
+- `GestaoOrcamentosDbContext` mapeia clientes, configurações, orçamentos e itens. As migrations versionam as alterações do esquema;
+- a view SQL `vw_ResumoOrcamentos` calcula os totais para a listagem sem carregar os itens no processo web;
+- a procedure `sp_RelatorioOrcamentosPorPeriodo` agrega quantidade e valor por situação;
+- a função `fn_OrcamentosVencidos` identifica orçamentos pendentes cuja validade passou. `AlertaOrcamentoWorker` executa o serviço de alertas em segundo plano, com um escopo de DI por ciclo;
+- o índice filtrado `IX_Orcamentos_Pendente_Validade` atende à busca dos orçamentos pendentes com validade definida;
+- `ViaCepClient` consulta o ViaCEP por meio do cliente HTTP gerenciado pelo ASP.NET Core.
 
-Conforme vamos criando vários orçamentos que nunca finalizamos, identifiquei então como um possível gargalo nesta consulta de vencimentos: `SELECT COUNT_BIG(*) FROM dbo.fn_OrcamentosVencidos('2026-10-16')`, fiz uma verificação técnica do efeito do índice usando um script de powershell + SQL Server LocalDB com um banco temporário com 100.000 orçamentos fictícios: 5.000 pendentes, dos quais 2.500 vencidos, com e sem o índice, e vejam os dados obtidos:
+## Fluxo dos orçamentos
+
+- Um orçamento começa como rascunho e pode ser editado ou excluído. O operador pode criá-lo pelo menu ou pela página de um cliente;
+- cada subtotal é arredondado para centavos com `decimal` e `AwayFromZero`, e o número apresentado usa o ID do banco com seis dígitos;
+- ao enviá-lo para aprovação, a aplicação exige os dados do negócio e registra cópias dos dados do cliente e do negócio;
+- enquanto está pendente, o operador pode aprovar, recusar ou devolver o orçamento ao rascunho. A devolução descarta as cópias, e um novo envio registra os dados atualizados;
+- orçamentos aprovados ou recusados ficam disponíveis para consulta, sem edição ou exclusão. A consulta usa os dados registrados no envio, mesmo que os cadastros tenham mudado;
+- um orçamento pode ser duplicado como novo rascunho. A cópia recebe novo número e data atual, mantém cliente, título, observações e itens, deixa a validade em branco e não copia os dados históricos. Seus itens são independentes do original;
+- a impressão apresenta uma versão pronta para impressão ou para salvar em PDF.
+
+O relatório usa a data de emissão e mostra quantidade e valor por situação, inclusive quando uma situação não tem registros no período. A verificação de vencimentos roda na inicialização e a cada minuto, então, registra no máximo um aviso por orçamento que continua pendente e vencido, sem mudar sua situação.
+
+## API de consulta
+
+- `GET /api/clientes?nome=&pagina=1&tamanhoPagina=20`: pesquisa opcional por nome, e a resposta contém `itens`, `pagina`, `tamanhoPagina`, `totalItens` e `totalPaginas`. O tamanho da página aceita valores de 1 a 100;
+- `GET /api/clientes/{id}`: retorna um cliente ou `404` quando ele não existe;
+- `POST /api/clientes`: cadastra cliente com os mesmos campos e validações da interface e responde `201` com `Location`;
+- `GET /api/enderecos/{cep}`: consulta o ViaCEP pelo servidor. O CEP deve conter oito dígitos e a resposta contém os campos de endereço usados no cadastro.
+
+Parâmetros de paginação e dados inválidos retornam `400` com erros por campo. Uma pesquisa sem resultados retorna `itens` vazio. CEP inexistente retorna `404`, e falhas ou timeout do ViaCEP retornam `503`. A consulta de CEP ajuda a preencher o endereço, que também pode ser digitado manualmente.
+
+Em ambiente de desenvolvimento, o documento OpenAPI fica em `/openapi/v1.json`. Para navegar pelos endpoints no Chrome, pode-se usar a [extensão OpenAPI Swaggerizer](https://chromewebstore.google.com/detail/openapi-swaggerizer/lnjdikkckkcpokjbckcgfnmdgikohjhd?authuser=0&hl=pt-BR).
+
+## Medição da consulta de vencimentos
+
+Conforme iremos criar vários orçamentos que nunca serão finalizamos, esta parte do sistema acaba se sendo mais requisitada, repare bem nesta consulta de vencimentos: `SELECT COUNT_BIG(*) FROM dbo.fn_OrcamentosVencidos('2026-10-16')`, fiz uma verificação técnica do efeito do índice `IX_Orcamentos_Pendente_Validade` usando um script de powershell + SQL Server LocalDB com um banco temporário com 100.000 orçamentos fictícios: 5.000 pendentes, dos quais 2.500 vencidos, com e sem o índice, e aqui estão os dados obtidos:
 
 | Estado                | Operador             | Linhas lidas | Leituras lógicas |       CPU / tempo decorrido |
 | --------------------- | -------------------- | -----------: | ---------------: | --------------------------: |
 | Sem o índice          | Clustered Index Scan |      100.000 |            1.044 |               16 ms / 16 ms |
 | Com o índice filtrado | Index Seek           |        2.500 |                7 | 0 ms / 0 ms (menor que 1ms) |
 
-## API de consulta de clientes
-
-- `GET /api/clientes?nome=&pagina=1&tamanhoPagina=20`: a pesquisa é opcional por nome, e a resposta contém `itens`, `pagina`, `tamanhoPagina`, `totalItens` e `totalPaginas`, já o tamanho da página deve ser de 1 a 100.
-- `GET /api/clientes/{id}`: retorna os dados de um cliente ou `404` se não existir.
-- `POST /api/clientes`: cadastra cliente com os mesmos campos e validações usados na interface e responde `201` com `Location`.
-- `GET /api/enderecos/{cep}`: consulta o **ViaCEP** pelo servidor, e o CEP deve ter oito dígitos, sendo assim a resposta fornece os campos usados no cadastro.
-
-#### Outros detalhes
-
-- Parâmetros de paginação e dados inválidos retornam `400` com erros por campo;
-- Uma página sem clientes retorna `itens` como vazio;
-- CEP inexistente retorna `404`;
-- Falhas ou timeout do ViaCEP retornam `503`;
-- A integração não impede o preenchimento manual do endereço, ok?
-- Em ambiente de desenvolvimento, o documento OpenAPI fica em `/openapi/v1.json`.
-
-[É possível ver melhor a hierarquia dos endpoints deste projeto em OpenAPI usando a melhor extensão para navegadores chrome que eu conheço](https://chromewebstore.google.com/detail/openapi-swaggerizer/lnjdikkckkcpokjbckcgfnmdgikohjhd?authuser=0&hl=pt-BR)
-
 ## Imagens da aplicação
 
-As imagens mostram o executável em execução com dados fictícios num banco de exemplo.
+As imagens mostram o aplicativo em execução com dados fictícios.
 
 ![Lista de clientes](docs/screenshots/clientes.png)
 
@@ -177,55 +126,46 @@ As imagens mostram o executável em execução com dados fictícios num banco de
 
 ![Alertas de orçamentos vencidos](docs/screenshots/orcamentos-vencidos.png)
 
-**_Em breve vou trabalhar na melhoria do UX_**
+## Requisitos e desenvolvimento
 
-## Requisitos de desenvolvimento
-
-- SDK do .NET 10.
+- SDK do .NET 10;
 - SQL Server LocalDB.
 
-### Preparo do banco de dados
-
-É necessário confirmar que a instância LocalDB está instalada e que a conexão funciona:
+Confirme que a instância LocalDB está instalada e que a conexão funciona:
 
 ```powershell
 SqlLocalDB info MSSQLLocalDB
 sqlcmd -S '(localdb)\MSSQLLocalDB' -E -Q 'SELECT 1'
 ```
 
-- A conexão de desenvolvimento está em `src/GestaoOrcamentos.Web/appsettings.Development.json` e usa autenticação integrada do Windows;
-- No Visual Studio, abra o Console do Gerenciador de Pacotes, selecione `GestaoOrcamentos.Web` como projeto padrão e execute:
+A conexão de desenvolvimento está em `src/GestaoOrcamentos.Web/appsettings.Development.json` e usa autenticação integrada do Windows. Para criar ou atualizar o banco, use o Console do Gerenciador de Pacotes do Visual Studio, selecionando `GestaoOrcamentos.Web` como projeto padrão:
 
 ```powershell
 Update-Database
 ```
 
-Se estiver usando o VS Code/terminal e tiver `dotnet-ef` instalado globalmente, o comando equivalente é:
+No terminal, com `dotnet-ef` instalado globalmente, execute o comando equivalente:
 
 ```powershell
 dotnet ef database update --project src/GestaoOrcamentos.Web/GestaoOrcamentos.Web.csproj
 ```
 
-## Executar
-
-Na raiz do repositório:
+Na raiz do repositório, restaure e inicie o aplicativo:
 
 ```powershell
 dotnet restore GestaoOrcamentos.slnx
 dotnet run --project src/GestaoOrcamentos.Web/GestaoOrcamentos.Web.csproj
 ```
 
-- Abra `http://127.0.0.1:5198` no navegador;
-- Para verificar a compilação sem iniciar o servidor, execute `dotnet build GestaoOrcamentos.slnx`.
+Abra `http://127.0.0.1:5198` no navegador. Para compilar sem iniciar o servidor:
 
-## Publicar e executar no Windows x64
+```powershell
+dotnet build GestaoOrcamentos.slnx
+```
 
-- O perfil atual produz um executável self-contained de arquivo único em `artifacts/publish/win-x64`;
-- O runtime do .NET está incluído;
-- O SQL Server continua sendo um requisito rodando em separado.
-- A conexão é configurada por variável de ambiente e não fica gravada no pacote.
+## Publicar no Windows x64
 
-**Um meio de compilar e rodar seria este:**
+O perfil `win-x64-local` publica um executável self-contained de arquivo único em `artifacts/publish/win-x64`. O runtime .NET está incluído, e o SQL Server precisa estar instalado separadamente. Configure a conexão por variável de ambiente:
 
 ```powershell
 dotnet publish src/GestaoOrcamentos.Web/GestaoOrcamentos.Web.csproj -c Release -p:PublishProfile=win-x64-local
@@ -236,15 +176,14 @@ Set-Location artifacts/publish/win-x64
 .\GestaoOrcamentos.Web.exe
 ```
 
-**Detalhes sobre o script acima**
-
-- `--migrate` aplica as migrations e encerra com código 0, pois em caso de falha, vai registrar o erro no console e retornar código diferente de zero;
-- Se fizer a inicialização normal não vai alterar o esquema do banco;
-- Por padrão, está abrindo em `http://localhost:5198`;
-- `LocalServer__Port`conseguirás alterar a porta;
-- O servidor permanece acessível somente no próprio computador.
+`--migrate` aplica as migrations e encerra com código 0. Em caso de falha, o erro é registrado e o processo retorna código diferente de zero. A inicialização normal não altera o esquema do banco. O endereço padrão é `http://localhost:5198`, já a porta pode ser alterada por `LocalServer__Port`.
 
 ## Testes
 
-- É possível executar `dotnet test GestaoOrcamentos.slnx`;
-- O teste de persistência vai criar e remove um banco LocalDB próprio.
+Execute a suíte xUnit com:
+
+```powershell
+dotnet test GestaoOrcamentos.slnx
+```
+
+Os testes cobrem validações, consultas, persistência, cálculos SQL e alertas, e os testes de persistência criam e removem um banco LocalDB próprio.
