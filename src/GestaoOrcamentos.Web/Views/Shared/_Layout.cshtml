@@ -14,6 +14,8 @@
                 <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">Gestão de orçamentos</a>
                 <a class="nav-link" asp-controller="Clientes" asp-action="Index">Clientes</a>
                 <a class="nav-link" asp-controller="Orcamentos" asp-action="Index">Orçamentos</a>
+                <a class="nav-link" asp-controller="Relatorios" asp-action="Orcamentos">Relatórios</a>
+                <a class="nav-link" asp-controller="Alertas" asp-action="Vencidos">Orçamentos vencidos</a>
                 <a class="nav-link" asp-controller="Orcamentos" asp-action="Criar">Novo orçamento</a>
                 <a class="nav-link" asp-page="/Configuracoes/Index">Configurações</a>
             </div>
@@ -30,5 +32,6 @@
             Gestão de orçamentos
         </div>
     </footer>
+    <script src="~/js/consulta-cep.js" asp-append-version="true" defer></script>
 </body>
 </html>

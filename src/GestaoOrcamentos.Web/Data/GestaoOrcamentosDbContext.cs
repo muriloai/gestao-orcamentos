@@ -10,6 +10,8 @@ public class GestaoOrcamentosDbContext(DbContextOptions<GestaoOrcamentosDbContex
     public DbSet<ConfiguracaoNegocio> ConfiguracoesNegocio => Set<ConfiguracaoNegocio>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
     public DbSet<ItemOrcamento> ItensOrcamento => Set<ItemOrcamento>();
+    public DbSet<ResumoOrcamento> ResumosOrcamentos => Set<ResumoOrcamento>();
+    public DbSet<AlertaOrcamentoVencido> AlertasOrcamentosVencidos => Set<AlertaOrcamentoVencido>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +48,9 @@ public class GestaoOrcamentosDbContext(DbContextOptions<GestaoOrcamentosDbContex
 
         modelBuilder.Entity<Orcamento>(entity =>
         {
+            entity.HasIndex(orcamento => new { orcamento.Validade, orcamento.Id })
+                .HasDatabaseName("IX_Orcamentos_Pendente_Validade")
+                .HasFilter("[Situacao] = 1 AND [Validade] IS NOT NULL");
             entity.ToTable(table =>
             {
                 table.HasCheckConstraint("CK_Orcamentos_Situacao", "[Situacao] IN (0, 1, 2, 3)");
@@ -79,6 +84,25 @@ public class GestaoOrcamentosDbContext(DbContextOptions<GestaoOrcamentosDbContex
             entity.Property(item => item.Unidade).HasMaxLength(30).IsRequired();
             entity.Property(item => item.Quantidade).HasPrecision(18, 3);
             entity.Property(item => item.PrecoUnitario).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<ResumoOrcamento>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vw_ResumoOrcamentos");
+            entity.Property(resumo => resumo.DataEmissao).HasColumnType("date");
+            entity.Property(resumo => resumo.Validade).HasColumnType("date");
+            entity.Property(resumo => resumo.Total).HasPrecision(28, 2);
+        });
+
+        modelBuilder.Entity<AlertaOrcamentoVencido>(entity =>
+        {
+            entity.HasKey(alerta => alerta.OrcamentoId);
+            entity.Property(alerta => alerta.CriadoEm).HasColumnType("datetimeoffset");
+            entity.HasOne(alerta => alerta.Orcamento)
+                .WithOne()
+                .HasForeignKey<AlertaOrcamentoVencido>(alerta => alerta.OrcamentoId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

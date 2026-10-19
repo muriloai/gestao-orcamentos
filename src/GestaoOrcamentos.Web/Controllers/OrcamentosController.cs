@@ -19,7 +19,7 @@ public class OrcamentosController(OrcamentoService orcamentoService, ClienteServ
             return BadRequest();
         }
 
-        var orcamentos = await orcamentoService.ListarAsync(busca, null, cancellationToken, situacao);
+        var orcamentos = await orcamentoService.ListarResumosAsync(busca, situacao, cancellationToken);
         return View(new OrcamentosLista(busca, situacao, orcamentos));
     }
 

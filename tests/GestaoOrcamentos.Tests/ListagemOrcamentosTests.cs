@@ -48,6 +48,11 @@ public class ListagemOrcamentosTests
                 Assert.Equal([0.01m, 20m, 10m], todos.Select(item => item.Total));
                 Assert.Equal(["Alice", "Bob", "Alice"], todos.Select(item => item.Cliente.Nome));
 
+                var resumos = await service.ListarResumosAsync(null, null, CancellationToken.None);
+                Assert.Equal([terceiroId, segundoId, primeiroId], resumos.Select(item => item.Id));
+                Assert.Equal([0.01m, 20m, 10m], resumos.Select(item => item.Total));
+                Assert.Equal(["Alice", "Bob", "Alice"], resumos.Select(item => item.NomeCliente));
+
                 var porCliente = await service.ListarAsync("  Alice  ", null, CancellationToken.None);
                 Assert.Equal([terceiroId, primeiroId], porCliente.Select(item => item.Id));
 

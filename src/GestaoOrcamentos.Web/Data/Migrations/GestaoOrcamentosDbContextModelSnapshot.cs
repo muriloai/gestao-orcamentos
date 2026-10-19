@@ -22,6 +22,19 @@ namespace GestaoOrcamentos.Web.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("GestaoOrcamentos.Web.Models.AlertaOrcamentoVencido", b =>
+                {
+                    b.Property<int>("OrcamentoId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("OrcamentoId");
+
+                    b.ToTable("AlertasOrcamentosVencidos");
+                });
+
             modelBuilder.Entity("GestaoOrcamentos.Web.Models.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -210,12 +223,61 @@ namespace GestaoOrcamentos.Web.Data.Migrations
 
                     b.HasIndex("ClienteId");
 
+                    b.HasIndex("Validade", "Id")
+                        .HasDatabaseName("IX_Orcamentos_Pendente_Validade")
+                        .HasFilter("[Situacao] = 1 AND [Validade] IS NOT NULL");
+
                     b.ToTable("Orcamentos", t =>
                         {
                             t.HasCheckConstraint("CK_Orcamentos_DadosRegistrados", "([Situacao] = 0 AND [ClienteRegistrado_Nome] IS NULL AND [NegocioRegistrado_Nome] IS NULL) OR ([Situacao] IN (1, 2, 3) AND [ClienteRegistrado_Nome] IS NOT NULL AND [NegocioRegistrado_Nome] IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_Orcamentos_Situacao", "[Situacao] IN (0, 1, 2, 3)");
                         });
+                });
+
+            modelBuilder.Entity("GestaoOrcamentos.Web.Models.ResumoOrcamento", b =>
+                {
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("DataEmissao")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NomeCliente")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Situacao")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(28, 2)
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<DateOnly?>("Validade")
+                        .HasColumnType("date");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_ResumoOrcamentos", (string)null);
+                });
+
+            modelBuilder.Entity("GestaoOrcamentos.Web.Models.AlertaOrcamentoVencido", b =>
+                {
+                    b.HasOne("GestaoOrcamentos.Web.Models.Orcamento", "Orcamento")
+                        .WithOne()
+                        .HasForeignKey("GestaoOrcamentos.Web.Models.AlertaOrcamentoVencido", "OrcamentoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Orcamento");
                 });
 
             modelBuilder.Entity("GestaoOrcamentos.Web.Models.ItemOrcamento", b =>

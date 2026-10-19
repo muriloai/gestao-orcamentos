@@ -49,7 +49,7 @@ else
                     <tr>
                         <td>@orcamento.Numero</td>
                         <td>@orcamento.DataEmissao.ToString("dd/MM/yyyy")</td>
-                        <td><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@orcamento.ClienteId">@orcamento.NomeClienteApresentado</a></td>
+                        <td><a asp-controller="Clientes" asp-action="Detalhes" asp-route-id="@orcamento.ClienteId">@orcamento.NomeCliente</a></td>
                         <td>@orcamento.Titulo</td>
                         <td>@orcamento.SituacaoTexto</td>
                         <td class="text-end">@orcamento.Total.ToString("C")</td>

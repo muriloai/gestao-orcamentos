@@ -45,6 +45,32 @@ public class OrcamentoService(GestaoOrcamentosDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<ResumoOrcamento>> ListarResumosAsync(string? busca, SituacaoOrcamento? situacao,
+        CancellationToken cancellationToken)
+    {
+        var consulta = dbContext.ResumosOrcamentos.AsNoTracking().AsQueryable();
+
+        if (situacao is not null)
+        {
+            if (!Enum.IsDefined(situacao.Value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(situacao));
+            }
+
+            consulta = consulta.Where(resumo => resumo.Situacao == situacao);
+        }
+
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            var termo = busca.Trim();
+            consulta = consulta.Where(resumo => resumo.Titulo.Contains(termo) || resumo.NomeCliente.Contains(termo));
+        }
+
+        return await consulta.OrderByDescending(resumo => resumo.DataEmissao)
+            .ThenByDescending(resumo => resumo.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<Orcamento?> ObterAsync(int id, CancellationToken cancellationToken) =>
         dbContext.Orcamentos.AsNoTracking()
             .Include(orcamento => orcamento.Cliente)

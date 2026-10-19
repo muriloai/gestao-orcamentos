@@ -1,0 +1,47 @@
+@model RelatorioOrcamentos
+@{
+    ViewData["Title"] = "Relatório de orçamentos";
+}
+
+<h1 class="h2 mb-4">Relatório de orçamentos</h1>
+
+<form asp-action="Orcamentos" method="get" class="row g-3 align-items-end mb-4">
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <div class="col-sm-4 col-md-3">
+        <label for="dataInicial" class="form-label">Emissão a partir de</label>
+        <input id="dataInicial" name="dataInicial" type="date" value="@Model.DataInicial.ToString("yyyy-MM-dd")" class="form-control" />
+        <span asp-validation-for="DataInicial" class="text-danger"></span>
+    </div>
+    <div class="col-sm-4 col-md-3">
+        <label for="dataFinal" class="form-label">Emissão até</label>
+        <input id="dataFinal" name="dataFinal" type="date" value="@Model.DataFinal.ToString("yyyy-MM-dd")" class="form-control" />
+        <span asp-validation-for="DataFinal" class="text-danger"></span>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Consultar</button>
+    </div>
+</form>
+
+<p>Período: @Model.DataInicial.ToString("dd/MM/yyyy") a @Model.DataFinal.ToString("dd/MM/yyyy").</p>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th scope="col">Situação</th>
+                <th scope="col" class="text-end">Quantidade</th>
+                <th scope="col" class="text-end">Valor total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var situacao in Model.Situacoes)
+            {
+                <tr>
+                    <th scope="row">@situacao.Descricao</th>
+                    <td class="text-end">@situacao.QuantidadeOrcamentos</td>
+                    <td class="text-end">@situacao.ValorTotal.ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

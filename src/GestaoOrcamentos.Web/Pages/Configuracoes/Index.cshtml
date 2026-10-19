@@ -40,6 +40,8 @@
                 <div class="col-md-4">
                     <label asp-for="Configuracao.Cep" class="form-label"></label>
                     <input asp-for="Configuracao.Cep" class="form-control" inputmode="numeric" autocomplete="postal-code" />
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-cep-consultar>Buscar endereço pelo CEP</button>
+                    <span class="d-block mt-1" data-cep-mensagem role="status" aria-live="polite"></span>
                     <span asp-validation-for="Configuracao.Cep" class="text-danger"></span>
                 </div>
                 <div class="col-md-8">

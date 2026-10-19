@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
+using GestaoOrcamentos.Web.Models;
 using GestaoOrcamentos.Web.Models.Api;
 using GestaoOrcamentos.Web.Services;
 
@@ -36,5 +37,16 @@ public class ClientesApiController(ClienteService clienteService) : ControllerBa
         return cliente is null
             ? Problem(statusCode: StatusCodes.Status404NotFound, title: "Cliente não encontrado.")
             : Ok(ClienteDto.DeCliente(cliente));
+    }
+
+    [HttpPost]
+    [ProducesResponseType<ClienteDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ClienteDto>> Criar(
+        [FromBody] ClienteFormulario formulario, CancellationToken cancellationToken)
+    {
+        var id = await clienteService.CadastrarAsync(formulario, cancellationToken);
+        var cliente = (await clienteService.ObterAsync(id, cancellationToken))!;
+        return CreatedAtAction(nameof(Obter), new { id }, ClienteDto.DeCliente(cliente));
     }
 }

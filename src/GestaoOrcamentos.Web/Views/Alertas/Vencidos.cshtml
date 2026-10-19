@@ -1,0 +1,42 @@
+@model AvisosOrcamentos
+@{
+    ViewData["Title"] = "Orçamentos vencidos";
+}
+
+<h1 class="h2 mb-2">Orçamentos vencidos</h1>
+<p class="text-muted">Pendentes de aprovação com validade anterior a @Model.DataReferencia.ToString("dd/MM/yyyy").</p>
+
+@if (Model.Orcamentos.Count == 0)
+{
+    <p>Nenhum orçamento vencido pendente de aprovação.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Número</th>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Título</th>
+                    <th scope="col">Validade</th>
+                    <th scope="col" class="text-end">Total</th>
+                    <th scope="col">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var orcamento in Model.Orcamentos)
+                {
+                    <tr>
+                        <td>@orcamento.Numero</td>
+                        <td>@orcamento.NomeCliente</td>
+                        <td>@orcamento.Titulo</td>
+                        <td>@orcamento.Validade!.Value.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">@orcamento.Total.ToString("C")</td>
+                        <td><a asp-controller="Orcamentos" asp-action="Detalhes" asp-route-id="@orcamento.Id">Consultar</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
